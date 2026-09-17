@@ -16,18 +16,25 @@ from `repository-workflow.md`.
 ## Executable Contracts
 
 - **G063** The engine repository's exported Go code and behavioral tests own
-  engine models, protocols, errors, and state-machine behavior. Other
-  repositories consume the pinned engine revision and do not copy its APIs.
+  generic engine models, command and query entry points, logical persistence
+  protocols, restoration rules, errors, and state-machine behavior. Other
+  repositories consume the pinned engine revision and do not reconstruct,
+  mutate, or copy those contracts.
 - **G064** `web/openapi/stu-trade.yaml` owns `/api/v1` paths, transport DTOs,
   statuses, and error structures. Generated client and server bindings derive
   from that file and are not edited by hand.
 - **G065** Web maintainers propose HTTP structures from caller needs; host
   maintainers review product semantics, security, idempotence, and feasibility,
   then implement only an accepted pinned revision.
-- **G066** Parent-repository migrations own PostgreSQL schema, constraints, and
-  migration order. Application models and OpenAPI must not redefine storage.
-- **G067** Parent-repository query files own sqlc query text; generated database
-  bindings are derived artifacts and remain inside the database adapter.
+- **G066** Parent-repository migrations own the physical PostgreSQL schema,
+  constraints, and migration order, including tables that implement engine
+  protocols and foreign keys to host-owned extensions. Physical schema
+  ownership does not transfer engine state semantics to the host. Application
+  models and OpenAPI must not redefine storage.
+- **G067** Parent-repository query files own sqlc query text. Generated database
+  bindings are derived artifacts and remain inside adapters that implement
+  engine protocols or host-owned persistence; host business code does not use
+  them to reconstruct or mutate engine entities directly.
 - **G068** Web implementation and behavioral tests own pages, interaction,
   frontend routing, accessibility, and frontend release behavior.
 - **G069** The host owns `/health`, `/ready`, process configuration, logging,

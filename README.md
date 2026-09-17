@@ -1,6 +1,6 @@
 # StuTrade Engine
 
-StuTrade Engine 是通用撮合 Go module。它管理挂单、价格兼容和撮合请求状态；领域规则、持久化、HTTP、日志和成交后的业务流程由宿主负责。
+StuTrade Engine 是通用撮合 Go module。它管理挂单、价格兼容、撮合请求状态及这些通用状态的逻辑存取；业务特有数据与规则、物理数据库适配、HTTP、日志和成交后的业务流程由宿主负责。
 
 ## 当前能力
 
@@ -15,7 +15,7 @@ StuTrade Engine 是通用撮合 Go module。它管理挂单、价格兼容和撮
 
 ## 边界
 
-依赖方向始终为 `host -> engine`。engine 保持同步、确定性，不读取环境变量、不连接数据库、不启动后台 goroutine，也不依赖 HTTP、ORM、日志库或宿主类型。宿主通过 engine 当前调用方所需的小型 interface 提供外部能力。
+依赖方向始终为 `host -> engine`。engine 保持同步、确定性，不读取环境变量、不直接连接数据库、不启动后台 goroutine，也不依赖 HTTP、ORM、日志库或宿主类型。engine 的用例定义当前调用方所需的小型存取 interface，并通过它恢复和持久化通用实体；宿主只装配物理适配器，不在业务代码中复制这些状态操作。
 
 当前生产代码只使用 Go 标准库，根 package 按责任拆文件：
 
