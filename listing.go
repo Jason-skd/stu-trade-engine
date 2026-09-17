@@ -94,6 +94,7 @@ type Listing struct {
 
 // NewListing 创建状态为 open 的挂单。
 func NewListing(id, ownerID, resourceRef string, side Side, price Amount, createdAt time.Time) (*Listing, error) {
+	// === 校验挂单字段 ===
 	if err := required("listing.id", id); err != nil {
 		return nil, err
 	}
@@ -113,6 +114,7 @@ func NewListing(id, ownerID, resourceRef string, side Side, price Amount, create
 		return nil, &ValidationError{Field: "listing.created_at", Reason: "must not be zero"}
 	}
 
+	// === 创建开放挂单 ===
 	return &Listing{
 		id:          id,
 		ownerID:     ownerID,
@@ -170,6 +172,7 @@ func (l *Listing) Withdraw(at time.Time) error {
 }
 
 func (l *Listing) transition(from, to ListingStatus, at time.Time) error {
+	// === 校验状态转换 ===
 	if l == nil {
 		return &ValidationError{Field: "listing", Reason: "must not be nil"}
 	}
@@ -179,6 +182,8 @@ func (l *Listing) transition(from, to ListingStatus, at time.Time) error {
 	if err := validateTimestamp("listing.updated_at", at, l.updatedAt); err != nil {
 		return err
 	}
+
+	// === 更新挂单状态 ===
 	l.status = to
 	l.updatedAt = at
 	return nil

@@ -84,6 +84,7 @@ func NewMatchRequest(
 	source MatchSource,
 	createdAt time.Time,
 ) (*MatchRequest, error) {
+	// === 校验请求字段 ===
 	if err := required("match_request.id", id); err != nil {
 		return nil, err
 	}
@@ -106,6 +107,7 @@ func NewMatchRequest(
 		return nil, &ValidationError{Field: "match_request.created_at", Reason: "must not be zero"}
 	}
 
+	// === 创建待处理请求 ===
 	confirmed := source != MatchSourceAutomatic
 	return &MatchRequest{
 		id:              id,
@@ -156,6 +158,7 @@ func (r MatchRequest) UpdatedAt() time.Time { return r.updatedAt }
 
 // Confirm 记录指定交易方向参与方的确认；重复确认不改变请求。
 func (r *MatchRequest) Confirm(side Side, at time.Time) error {
+	// === 校验确认操作 ===
 	if err := r.ensurePending(MatchRequestStatusPending.String()); err != nil {
 		return err
 	}
@@ -169,6 +172,7 @@ func (r *MatchRequest) Confirm(side Side, at time.Time) error {
 		return err
 	}
 
+	// === 记录参与方确认 ===
 	if side == SideBuy {
 		r.buyerConfirmed = true
 	} else {
@@ -180,6 +184,7 @@ func (r *MatchRequest) Confirm(side Side, at time.Time) error {
 
 // Complete 将双方已确认的待处理请求标记为已成交。
 func (r *MatchRequest) Complete(orderRef string, at time.Time) error {
+	// === 校验完成条件 ===
 	if err := r.ensurePending(MatchRequestStatusCompleted.String()); err != nil {
 		return err
 	}
@@ -193,6 +198,7 @@ func (r *MatchRequest) Complete(orderRef string, at time.Time) error {
 		return err
 	}
 
+	// === 完成撮合请求 ===
 	r.status = MatchRequestStatusCompleted
 	r.orderRef = orderRef
 	r.updatedAt = at
@@ -210,12 +216,15 @@ func (r *MatchRequest) Cancel(at time.Time) error {
 }
 
 func (r *MatchRequest) finish(status MatchRequestStatus, at time.Time) error {
+	// === 校验终态转换 ===
 	if err := r.ensurePending(status.String()); err != nil {
 		return err
 	}
 	if err := validateTimestamp("match_request.updated_at", at, r.updatedAt); err != nil {
 		return err
 	}
+
+	// === 更新请求终态 ===
 	r.status = status
 	r.updatedAt = at
 	return nil

@@ -9,6 +9,7 @@ import (
 func TestNewMatchRequest(t *testing.T) {
 	t.Parallel()
 
+	// === 定义测试用例 ===
 	price := mustAmount(t, 2000)
 	tests := []struct {
 		name          string
@@ -33,6 +34,7 @@ func TestNewMatchRequest(t *testing.T) {
 		{name: "zero creation time", id: "request-1", buyListingID: "buy-1", sellListingID: "sell-1", tradePrice: price, source: MatchSourceAutomatic, wantField: "match_request.created_at"},
 	}
 
+	// === 执行测试用例 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -70,6 +72,7 @@ func TestNewMatchRequest(t *testing.T) {
 func TestMatchRequestConfirm(t *testing.T) {
 	t.Parallel()
 
+	// === 记录买方确认 ===
 	request := mustMatchRequest(t, MatchSourceAutomatic)
 	buyerAt := testTime.Add(time.Minute)
 	if err := request.Confirm(SideBuy, buyerAt); err != nil {
@@ -78,6 +81,8 @@ func TestMatchRequestConfirm(t *testing.T) {
 	if !request.BuyerConfirmed() || request.SellerConfirmed() {
 		t.Fatalf("confirmations = (%t, %t), want (true, false)", request.BuyerConfirmed(), request.SellerConfirmed())
 	}
+
+	// === 验证重复确认 ===
 	beforeDuplicate := *request
 	if err := request.Confirm(SideBuy, testTime); err != nil {
 		t.Fatalf("duplicate Confirm(buyer) error = %v", err)
@@ -86,6 +91,7 @@ func TestMatchRequestConfirm(t *testing.T) {
 		t.Fatalf("request changed after duplicate confirmation: got %+v, want %+v", *request, beforeDuplicate)
 	}
 
+	// === 记录卖方确认 ===
 	sellerAt := buyerAt.Add(time.Minute)
 	if err := request.Confirm(SideSell, sellerAt); err != nil {
 		t.Fatalf("Confirm(seller) error = %v", err)
@@ -98,6 +104,7 @@ func TestMatchRequestConfirm(t *testing.T) {
 func TestMatchRequestConfirmRejectsInvalidInputWithoutMutation(t *testing.T) {
 	t.Parallel()
 
+	// === 定义测试用例 ===
 	tests := []struct {
 		name      string
 		side      Side
@@ -109,6 +116,7 @@ func TestMatchRequestConfirmRejectsInvalidInputWithoutMutation(t *testing.T) {
 		{name: "time before update", side: SideBuy, at: testTime.Add(-time.Nanosecond), wantField: "match_request.updated_at"},
 	}
 
+	// === 执行测试用例 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -127,6 +135,7 @@ func TestMatchRequestConfirmRejectsInvalidInputWithoutMutation(t *testing.T) {
 func TestMatchRequestComplete(t *testing.T) {
 	t.Parallel()
 
+	// === 拒绝未确认请求 ===
 	request := mustMatchRequest(t, MatchSourceAutomatic)
 	before := *request
 	if err := request.Complete("order-1", testTime.Add(time.Minute)); !errors.Is(err, ErrConfirmationRequired) {
@@ -136,12 +145,15 @@ func TestMatchRequestComplete(t *testing.T) {
 		t.Fatalf("request changed without confirmation: got %+v, want %+v", *request, before)
 	}
 
+	// === 确认双方参与者 ===
 	if err := request.Confirm(SideBuy, testTime.Add(time.Minute)); err != nil {
 		t.Fatal(err)
 	}
 	if err := request.Confirm(SideSell, testTime.Add(2*time.Minute)); err != nil {
 		t.Fatal(err)
 	}
+
+	// === 拒绝空订单引用 ===
 	beforeMissingOrder := *request
 	if err := request.Complete("", testTime.Add(3*time.Minute)); err == nil {
 		t.Fatal("Complete() error = nil, want validation error")
@@ -152,6 +164,7 @@ func TestMatchRequestComplete(t *testing.T) {
 		t.Fatalf("request changed without order reference: got %+v, want %+v", *request, beforeMissingOrder)
 	}
 
+	// === 完成撮合请求 ===
 	completedAt := testTime.Add(3 * time.Minute)
 	if err := request.Complete("order-1", completedAt); err != nil {
 		t.Fatalf("Complete() error = %v", err)
@@ -164,7 +177,10 @@ func TestMatchRequestComplete(t *testing.T) {
 func TestDirectMatchRequestCanCompleteImmediately(t *testing.T) {
 	t.Parallel()
 
+	// === 定义测试用例 ===
 	tests := []MatchSource{MatchSourceSellerAccept, MatchSourceBuyerPurchase}
+
+	// === 执行测试用例 ===
 	for _, source := range tests {
 		t.Run(source.String(), func(t *testing.T) {
 			t.Parallel()
@@ -183,6 +199,7 @@ func TestDirectMatchRequestCanCompleteImmediately(t *testing.T) {
 func TestMatchRequestTerminalTransitions(t *testing.T) {
 	t.Parallel()
 
+	// === 定义测试用例 ===
 	tests := []struct {
 		name       string
 		act        func(*MatchRequest, time.Time) error
@@ -192,6 +209,7 @@ func TestMatchRequestTerminalTransitions(t *testing.T) {
 		{name: "cancel", act: (*MatchRequest).Cancel, wantStatus: MatchRequestStatusCancelled},
 	}
 
+	// === 执行测试用例 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

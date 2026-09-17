@@ -5,6 +5,7 @@ import "testing"
 func TestPriceCompatible(t *testing.T) {
 	t.Parallel()
 
+	// === 定义测试用例 ===
 	tests := []struct {
 		name      string
 		sellerAsk Amount
@@ -18,6 +19,7 @@ func TestPriceCompatible(t *testing.T) {
 		{name: "invalid buyer bid", sellerAsk: mustAmount(t, 1000), want: false},
 	}
 
+	// === 执行测试用例 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

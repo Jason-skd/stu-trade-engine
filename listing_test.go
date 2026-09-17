@@ -11,6 +11,7 @@ var testTime = time.Date(2026, time.September, 17, 12, 0, 0, 0, time.UTC)
 func TestNewAmount(t *testing.T) {
 	t.Parallel()
 
+	// === 定义测试用例 ===
 	tests := []struct {
 		name    string
 		cents   int64
@@ -22,6 +23,7 @@ func TestNewAmount(t *testing.T) {
 		{name: "large amount", cents: 1<<63 - 1},
 	}
 
+	// === 执行测试用例 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -44,6 +46,7 @@ func TestNewAmount(t *testing.T) {
 func TestNewListing(t *testing.T) {
 	t.Parallel()
 
+	// === 定义测试用例 ===
 	price := mustAmount(t, 2500)
 	tests := []struct {
 		name        string
@@ -66,6 +69,7 @@ func TestNewListing(t *testing.T) {
 		{name: "zero creation time", id: "buy-1", ownerID: "user-1", resourceRef: "book-1", side: SideBuy, price: price, wantField: "listing.created_at"},
 	}
 
+	// === 执行测试用例 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -100,6 +104,7 @@ func TestNewListing(t *testing.T) {
 func TestListingAllowedTransitions(t *testing.T) {
 	t.Parallel()
 
+	// === 定义测试用例 ===
 	tests := []struct {
 		name        string
 		transitions []func(*Listing, time.Time) error
@@ -111,6 +116,7 @@ func TestListingAllowedTransitions(t *testing.T) {
 		{name: "withdraw", transitions: []func(*Listing, time.Time) error{(*Listing).Withdraw}, wantStatus: ListingStatusWithdrawn},
 	}
 
+	// === 执行测试用例 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -136,6 +142,7 @@ func TestListingAllowedTransitions(t *testing.T) {
 func TestListingRejectedTransitionsDoNotMutate(t *testing.T) {
 	t.Parallel()
 
+	// === 定义测试用例 ===
 	tests := []struct {
 		name    string
 		prepare func(*Listing)
@@ -149,6 +156,7 @@ func TestListingRejectedTransitionsDoNotMutate(t *testing.T) {
 		{name: "withdrawn is terminal", prepare: withdrawListing, act: (*Listing).Reserve},
 	}
 
+	// === 执行测试用例 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -170,6 +178,7 @@ func TestListingRejectedTransitionsDoNotMutate(t *testing.T) {
 func TestListingRejectsInvalidTransitionTimeWithoutMutation(t *testing.T) {
 	t.Parallel()
 
+	// === 定义测试用例 ===
 	tests := []struct {
 		name string
 		at   time.Time
@@ -178,6 +187,7 @@ func TestListingRejectsInvalidTransitionTimeWithoutMutation(t *testing.T) {
 		{name: "before update", at: testTime.Add(-time.Nanosecond)},
 	}
 
+	// === 执行测试用例 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -251,9 +261,13 @@ func withdrawListing(listing *Listing) {
 
 func assertValidationError(t *testing.T, err error, wantField string) {
 	t.Helper()
+
+	// === 校验错误标识 ===
 	if !errors.Is(err, ErrInvalidArgument) {
 		t.Fatalf("error = %v, want errors.Is(_, ErrInvalidArgument)", err)
 	}
+
+	// === 校验错误详情 ===
 	var validationErr *ValidationError
 	if !errors.As(err, &validationErr) {
 		t.Fatalf("error = %v, want *ValidationError", err)
@@ -265,9 +279,13 @@ func assertValidationError(t *testing.T, err error, wantField string) {
 
 func assertTransitionError(t *testing.T, err error, wantEntity string) {
 	t.Helper()
+
+	// === 校验错误标识 ===
 	if !errors.Is(err, ErrInvalidTransition) {
 		t.Fatalf("error = %v, want errors.Is(_, ErrInvalidTransition)", err)
 	}
+
+	// === 校验错误详情 ===
 	var transitionErr *TransitionError
 	if !errors.As(err, &transitionErr) {
 		t.Fatalf("error = %v, want *TransitionError", err)
