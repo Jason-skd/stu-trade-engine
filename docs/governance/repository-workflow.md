@@ -22,10 +22,11 @@ changes. Clause numbering continues from the root `AGENTS.md`.
 
 ## Branches and Pull Requests
 
-- **G042** Pure documentation changes are committed and pushed directly to
-  `main` in `stu-trade`, `stu-trade-engine`, and `stu-trade-web`. This includes
-  synchronized governance and skill Markdown plus the parent gitlink updates
-  needed to record those documentation revisions.
+- **G042** Pure documentation changes may be committed and pushed directly to
+  `main` in the repository where the task is authorized. Synchronizing the same
+  change across repositories requires explicit authorization naming every
+  target repository; otherwise hand each target off independently. Parent
+  gitlink updates remain changes in the parent repository.
 - **G043** All other changes use a branch outside `main` and merge through a
   pull request unless an explicit task instruction states otherwise.
 - **G044** Rebase private work onto `main` and resolve conflicts in that
@@ -47,7 +48,10 @@ changes. Clause numbering continues from the root `AGENTS.md`.
 - **G051** Acceptance states observable outcomes independent of implementation
   details.
 - **G052** Filing a short issue does not require a full implementation study
-  unless the proposal depends on unresolved technical facts.
+  unless the proposal depends on unresolved technical facts. A required change
+  owned by another repository is filed there as an Emergency Issue with the
+  current evidence, blocking impact, proposed direction, and observable
+  acceptance; notify the user to schedule that repository's agent.
 
 ## Documentation
 

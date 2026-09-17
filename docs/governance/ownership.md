@@ -43,9 +43,12 @@ from `repository-workflow.md`.
 
 ## Cross-Repository Changes
 
-- **G070** A cross-repository change updates its authoritative source first,
-  then generated artifacts and implementations, then the parent gitlinks and
-  integration checks. Do not maintain parallel transition contracts.
+- **G070** Cross-repository work is a handoff sequence, not shared write
+  authority. The agent for the owning repository updates the authoritative
+  source and its derived implementation first. After that revision is merged,
+  the agent for each consuming repository updates only its own generated
+  artifacts, pinned revision or parent gitlink, and integration checks. Do not
+  maintain parallel transition contracts.
 - **G071** The parent repository records exact engine and web commits. A child
   repository merge does not affect integration until the parent gitlink is
   updated and verified.

@@ -14,9 +14,11 @@ work inside that scope.
   inspection.
 - **G003** Skills under `.agents/skills/` add task workflows. They do not
   override this contract, broaden scope, or authorize writes.
-- **G004** Ask before choosing incompatible user-visible behavior, crossing a
-  product boundary, performing irreversible work, or breaking a public
-  protocol.
+- **G004** Implementation authority is limited to this repository. It does not
+  extend to submodules, sibling or nested repositories, or other repositories
+  in the same product or workspace. Outside repositories may be inspected
+  read-only for evidence; the only permitted cross-repository mutation is
+  filing an Emergency Issue in the owning repository for handoff.
 
 # Evidence and Workspace
 
@@ -60,7 +62,10 @@ work inside that scope.
 - **G014** For commits, branches, issues, pull requests, or documentation, read
   [`docs/governance/repository-workflow.md`](docs/governance/repository-workflow.md).
 - **G015** For ownership, authoritative sources, or cross-repository changes,
-  read [`docs/governance/ownership.md`](docs/governance/ownership.md).
+  read [`docs/governance/ownership.md`](docs/governance/ownership.md). When a
+  required change is owned elsewhere, use
+  [`.agents/skills/cross-repository-escalation`](.agents/skills/cross-repository-escalation/SKILL.md)
+  and stop before modifying the owning repository.
 - **G016** For design, implementation, refactoring, dependencies, comments,
   schemas, or generated sources, read
   [`docs/governance/implementation.md`](docs/governance/implementation.md).
