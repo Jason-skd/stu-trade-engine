@@ -1,7 +1,7 @@
 # Interface Governance
 
-Read this file when changing errors, HTTP behavior, transport DTOs, or external
-protocol integration. Clause numbering continues from `implementation.md`.
+This file governs errors, HTTP behavior, transport DTOs, and external protocol
+integration. Clause numbering continues from `implementation.md`.
 
 ## Errors
 

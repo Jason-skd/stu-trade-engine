@@ -31,12 +31,11 @@ work inside that scope.
 - **G009** Never claim unobserved behavior, test results, generated state, or
   external outcomes.
 
-# Numbered Governance
+# Numbered Governance — Important
 
-**Every governance review must account for the clause IDs, not rely on a vague
-claim that the change “looks compliant.”**
-
-- **G010** Every normative clause in this file and `docs/governance/*.md` has
+- **G010** Every governance review must account for the clause IDs rather than
+  claim vaguely that the change looks compliant. Every normative clause in
+  this file and `docs/governance/*.md` has
   one globally unique ID. IDs increase in this canonical file order:
   `AGENTS.md`, `repository-workflow.md`, `ownership.md`, `implementation.md`,
   `interfaces.md`, then `verification.md`. Adding, removing, or moving a clause

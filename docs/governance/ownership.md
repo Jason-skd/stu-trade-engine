@@ -1,7 +1,7 @@
 # Ownership and Authoritative Sources
 
-Read this file when assigning responsibilities, changing a cross-repository
-contract, or deciding which artifact owns a fact. Clause numbering continues
+This file governs responsibility assignment, cross-repository contracts, and
+decisions about which artifact owns a fact. Clause numbering continues
 from `repository-workflow.md`.
 
 ## Product and Planning

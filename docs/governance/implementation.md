@@ -1,7 +1,7 @@
 # Implementation Governance
 
-Read this file for design, implementation, refactoring, dependencies, comments,
-schemas, queries, or generated sources. Clause numbering continues from
+This file governs design, implementation, refactoring, dependencies, comments,
+schemas, queries, and generated sources. Clause numbering continues from
 `ownership.md`.
 
 ## Modeling

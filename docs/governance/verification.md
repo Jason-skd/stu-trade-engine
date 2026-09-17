@@ -1,7 +1,7 @@
 # Verification Governance
 
-Read this file for behavior changes, tests, CI, asynchronous work, managed
-resources, or claims that an implementation is complete. Clause numbering
+This file governs behavior changes, tests, CI, asynchronous work, managed
+resources, and claims that an implementation is complete. Clause numbering
 continues from `interfaces.md`.
 
 ## Test Ownership

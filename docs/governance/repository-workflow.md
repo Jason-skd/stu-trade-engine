@@ -1,6 +1,6 @@
 # Repository Workflow
 
-Read this file for commits, branches, issues, pull requests, and documentation
+This file governs commits, branches, issues, pull requests, and documentation
 changes. Clause numbering continues from the root `AGENTS.md`.
 
 ## Commits
