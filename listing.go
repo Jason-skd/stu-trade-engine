@@ -80,6 +80,10 @@ func (s ListingStatus) String() string {
 	}
 }
 
+func (s ListingStatus) valid() bool {
+	return s >= ListingStatusOpen && s <= ListingStatusWithdrawn
+}
+
 // Listing 表示一个通用买方需求或卖方供给。零值无效，挂单必须通过 NewListing 创建。
 //
 // 状态转换要求时间非零且不早于 UpdatedAt。非法时间或空接收者返回 ValidationError，
@@ -93,6 +97,19 @@ type Listing struct {
 	status      ListingStatus
 	createdAt   time.Time
 	updatedAt   time.Time
+}
+
+// ListingRecord 是 Listing 的逻辑持久化表示。宿主适配器负责存取该表示，
+// 业务代码必须通过 RestoreListing 恢复并校验实体。
+type ListingRecord struct {
+	ID          string
+	OwnerID     string
+	ResourceRef string
+	Side        Side
+	PriceCents  int64
+	Status      ListingStatus
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // NewListing 创建状态为 open 的挂单。ID、所有者 ID 和资源引用必须包含非空白字符，
@@ -129,6 +146,53 @@ func NewListing(id, ownerID, resourceRef string, side Side, price Amount, create
 		createdAt:   createdAt,
 		updatedAt:   createdAt,
 	}, nil
+}
+
+// RestoreListing 从逻辑持久化表示恢复并校验 Listing。损坏的持久化数据返回 ValidationError。
+func RestoreListing(record ListingRecord) (*Listing, error) {
+	if err := required("listing.id", record.ID); err != nil {
+		return nil, err
+	}
+	if err := required("listing.owner_id", record.OwnerID); err != nil {
+		return nil, err
+	}
+	if err := required("listing.resource_ref", record.ResourceRef); err != nil {
+		return nil, err
+	}
+	if !record.Side.valid() {
+		return nil, &ValidationError{Field: "listing.side", Reason: "must be buy or sell"}
+	}
+	price, err := NewAmount(record.PriceCents)
+	if err != nil {
+		return nil, &ValidationError{Field: "listing.price", Reason: "must be positive"}
+	}
+	if !record.Status.valid() {
+		return nil, &ValidationError{Field: "listing.status", Reason: "must be open, reserved, matched, or withdrawn"}
+	}
+	if record.CreatedAt.IsZero() {
+		return nil, &ValidationError{Field: "listing.created_at", Reason: "must not be zero"}
+	}
+	if record.UpdatedAt.IsZero() {
+		return nil, &ValidationError{Field: "listing.updated_at", Reason: "must not be zero"}
+	}
+	if record.UpdatedAt.Before(record.CreatedAt) {
+		return nil, &ValidationError{Field: "listing.updated_at", Reason: "must not be before the creation time"}
+	}
+
+	return &Listing{
+		id: record.ID, ownerID: record.OwnerID, resourceRef: record.ResourceRef,
+		side: record.Side, price: price, status: record.Status,
+		createdAt: record.CreatedAt, updatedAt: record.UpdatedAt,
+	}, nil
+}
+
+// Record 返回可交给宿主适配器持久化的 Listing 表示。
+func (l Listing) Record() ListingRecord {
+	return ListingRecord{
+		ID: l.id, OwnerID: l.ownerID, ResourceRef: l.resourceRef,
+		Side: l.side, PriceCents: l.price.Cents(), Status: l.status,
+		CreatedAt: l.createdAt, UpdatedAt: l.updatedAt,
+	}
 }
 
 // ID 返回挂单 ID。

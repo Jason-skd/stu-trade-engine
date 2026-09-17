@@ -13,6 +13,10 @@ var (
 	ErrInvalidTransition = errors.New("invalid state transition")
 	// ErrConfirmationRequired 表示完成撮合请求前仍缺少参与方确认。
 	ErrConfirmationRequired = errors.New("confirmation required")
+	// ErrListingNotFound 表示请求的挂单不存在。
+	ErrListingNotFound = errors.New("listing not found")
+	// ErrListingNotOwned 表示调用者不是挂单所有者。
+	ErrListingNotOwned = errors.New("listing not owned")
 )
 
 // ValidationError 描述无法通过领域校验的字段。

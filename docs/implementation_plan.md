@@ -6,12 +6,12 @@
 
 从主仓库三条交易纵切的真实调用方提取以下最小能力：
 
-1. 撤回 open Listing，并在需要时取消关联 pending MatchRequest。
+1. 撤回 reserved Listing，并取消关联 pending MatchRequest、释放有效的对手 Listing。
 2. 为指定 Listing 同步发现和排序候选。
 3. 在共享工作单元中锁定 Listing、重做规则检查并创建唯一 MatchRequest。
 4. 直接接受需求或购买供给，使用当前存在的目标 Listing 创建 completed MatchRequest 和宿主订单，不制造虚假反向 Listing。
 5. 幂等确认或拒绝 pending MatchRequest，并正确释放或完成 Listing。
-6. 查询宿主需要展示的单个实体或待确认请求，但不承载领域搜索读模型。
+6. 查询宿主需要展示的 MatchRequest，但不承载领域搜索读模型。
 
 ## 目标协作边界
 
@@ -31,13 +31,12 @@ engine 是通用 Listing、MatchRequest 的唯一领域访问入口，并按用�
 
 ## 实施顺序
 
-1. 从账户与挂单纵切提取最小存取、恢复、批量读取和共享工作单元能力。
-2. 从主动购买纵切提取规则和订单创建能力，并调整直接成交模型以只引用真实存在的 Listing。
-3. 复用相同核心实现卖方接单，避免 mode 驱动的平行流程。
-4. 加入候选排序和自动撮合，创建 pending MatchRequest。
-5. 加入确认、拒绝和撤回协作。
-6. 根据宿主组装和查询入口补充最小批量读取能力。
-7. 通过主仓库真实 PostgreSQL 适配和跨仓库测试验证协议。
+1. 从主动购买纵切提取规则和订单创建能力，并调整直接成交模型以只引用真实存在的 Listing。
+2. 复用相同核心实现卖方接单，避免 mode 驱动的平行流程。
+3. 加入候选排序和自动撮合，创建 pending MatchRequest。
+4. 加入确认、拒绝和 reserved Listing 撤回协作。
+5. 根据宿主组装和查询入口补充 MatchRequest 的最小读取能力。
+6. 通过主仓库真实 PostgreSQL 适配和跨仓库测试验证协议。
 
 ## 验证目标
 

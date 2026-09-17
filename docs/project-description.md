@@ -48,6 +48,15 @@ type ListingCreator interface {
 
 interface 由 engine 的消费方定义，只包含当前用例需要的能力。engine 在输入无效时不会调用依赖，并保留持久化错误的原因。
 
+宿主适配器以 `ListingRecord` 交换逻辑持久化数据，engine 通过 `RestoreListing`
+统一校验并恢复实体。`ReadListings` 使用一个批量调用取得记录并按输入 ID
+顺序返回；缺失挂单由 `ErrListingNotFound` 稳定标识。
+
+`WithdrawListing` 消费事务绑定的 `ListingWithdrawer`，先锁定并重新读取当前记录，
+再校验所有者与状态。open Listing 被改为 withdrawn；同一所有者重复撤回已 withdrawn
+Listing 幂等成功；reserved 与 matched 状态保持不可撤回。宿主负责将该能力装配在
+与业务资料相同的物理事务中。关联 MatchRequest 的取消与对手 Listing 释放尚未加入。
+
 ## 所有权
 
 本仓库的导出 Go 代码和行为测试是 engine 运行契约的权威来源。产品成交语义和跨组件边界由 StuTrade 主仓库负责；后续尚未实现的 engine 用例记录在[实施方案](implementation_plan.md)，不构成当前 API。
