@@ -43,3 +43,14 @@ func TestDomainErrorContracts(t *testing.T) {
 		})
 	}
 }
+
+func TestListingErrorIdentities(t *testing.T) {
+	t.Parallel()
+
+	if ErrListingNotFound.Error() != "listing not found" {
+		t.Fatalf("ErrListingNotFound = %q", ErrListingNotFound)
+	}
+	if ErrListingNotOwned.Error() != "listing not owned" {
+		t.Fatalf("ErrListingNotOwned = %q", ErrListingNotOwned)
+	}
+}
