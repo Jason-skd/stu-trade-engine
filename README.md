@@ -34,10 +34,12 @@ errors.go          稳定领域错误
 ## 开发
 
 ```bash
-go fmt ./...
+test -z "$(gofmt -l .)"
 go vet ./...
 go test ./...
 go test -race ./...
+go mod tidy -diff
+git diff --check
 ```
 
 ## 文档索引
