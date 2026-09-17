@@ -174,6 +174,25 @@ func TestMatchRequestComplete(t *testing.T) {
 	}
 }
 
+func TestMatchRequestCompleteRejectsInvalidTimeWithoutMutation(t *testing.T) {
+	t.Parallel()
+
+	request := mustMatchRequest(t, MatchSourceAutomatic)
+	if err := request.Confirm(SideBuy, testTime.Add(time.Minute)); err != nil {
+		t.Fatalf("Confirm(buyer) error = %v", err)
+	}
+	if err := request.Confirm(SideSell, testTime.Add(2*time.Minute)); err != nil {
+		t.Fatalf("Confirm(seller) error = %v", err)
+	}
+
+	before := *request
+	err := request.Complete("order-1", testTime.Add(time.Minute))
+	assertValidationError(t, err, "match_request.updated_at")
+	if *request != before {
+		t.Fatalf("request changed after invalid completion time: got %+v, want %+v", *request, before)
+	}
+}
+
 func TestDirectMatchRequestCanCompleteImmediately(t *testing.T) {
 	t.Parallel()
 

@@ -145,7 +145,7 @@ func TestListingRejectedTransitionsDoNotMutate(t *testing.T) {
 	// === 定义测试用例 ===
 	tests := []struct {
 		name    string
-		prepare func(*Listing)
+		prepare func(*testing.T, *Listing)
 		act     func(*Listing, time.Time) error
 	}{
 		{name: "open to matched", act: (*Listing).MarkMatched},
@@ -163,7 +163,7 @@ func TestListingRejectedTransitionsDoNotMutate(t *testing.T) {
 
 			listing := mustListing(t)
 			if tt.prepare != nil {
-				tt.prepare(listing)
+				tt.prepare(t, listing)
 			}
 			before := *listing
 			err := tt.act(listing, before.updatedAt.Add(time.Minute))
@@ -240,22 +240,28 @@ func mustListing(t *testing.T) *Listing {
 	return listing
 }
 
-func reserveListing(listing *Listing) {
+func reserveListing(t *testing.T, listing *Listing) {
+	t.Helper()
+
 	if err := listing.Reserve(testTime.Add(time.Minute)); err != nil {
-		panic(err)
+		t.Fatalf("Reserve() error = %v", err)
 	}
 }
 
-func matchListing(listing *Listing) {
-	reserveListing(listing)
+func matchListing(t *testing.T, listing *Listing) {
+	t.Helper()
+
+	reserveListing(t, listing)
 	if err := listing.MarkMatched(testTime.Add(2 * time.Minute)); err != nil {
-		panic(err)
+		t.Fatalf("MarkMatched() error = %v", err)
 	}
 }
 
-func withdrawListing(listing *Listing) {
+func withdrawListing(t *testing.T, listing *Listing) {
+	t.Helper()
+
 	if err := listing.Withdraw(testTime.Add(time.Minute)); err != nil {
-		panic(err)
+		t.Fatalf("Withdraw() error = %v", err)
 	}
 }
 
