@@ -2,6 +2,8 @@
 
 StuTrade 的通用撮合引擎。它以 Go module 嵌入业务宿主，管理挂单、价格撮合和撮合请求；领域规则、持久化和成交后的业务流程由宿主提供。
 
+整个项目的产品范围、架构和跨仓库契约以主仓库 `docs/` 为唯一文档真相源。本 README 只说明 engine 的代码边界和开发方式，不独立扩展产品语义。
+
 ## MVP 目标
 
 第一版服务二手书交易，支持三条路径：
@@ -79,33 +81,15 @@ pending -----> completed
 
 ## 宿主 Protocol
 
-Protocol 是由引擎消费方定义的小型 Go interface 集合，不是一个包含所有宿主能力的大接口。实际方法随第一条宿主纵向链路一起定型，预期责任如下：
+Protocol 是由引擎消费方定义的小型 Go interface 集合，不是一个包含所有宿主能力的大接口。当前首个调用方只需要发布挂单，因此协议保持为单方法能力：
 
 ```go
-type MatchPolicy interface {
-	Evaluate(context.Context, Proposal) (Decision, error)
-}
-
-type CandidateFinder interface {
-	FindCandidates(context.Context, Listing) ([]Listing, error)
-}
-
-type UnitOfWork interface {
-	Do(context.Context, func(Transaction) error) error
-}
-
-type Transaction interface {
-	ListingStore
-	MatchRequestStore
-	TradeCreator
+type ListingCreator interface {
+	CreateListing(context.Context, *Listing) error
 }
 ```
 
-`Decision` 表达允许或带稳定原因码的业务拒绝；`error` 只表示依赖或执行失败。引擎不记录日志，宿主在最终处理边界统一记录。
-
-`Transaction` 只组合完成一次状态变更所需的能力，使挂单预留、请求更新和宿主订单创建可以原子提交。宿主订单必须以撮合请求 ID 建立唯一约束，保证重试不会重复成交。
-
-实现并发事务时，适配器按挂单 ID 的稳定顺序加锁。确认操作对已确认方幂等；两个确认、确认与撤单以及多个候选争抢同一挂单时，最终只能创建一个订单。
+`PublishListing` 负责构造合法的 open 挂单，再通过该能力持久化。候选查询、事务、宿主规则和订单创建能力会随对应成交用例加入；当前不预先公开没有调用者的接口。引擎不记录日志，宿主在最终处理边界统一记录。
 
 ## 公开用例
 
@@ -126,11 +110,11 @@ MVP 保持单一根包，按责任拆文件，不预建没有调用者的分层�
 ```text
 .
 ├── doc.go                 包文档
-├── engine.go              构造与公开用例编排
+├── engine.go              发布挂单用例编排
 ├── listing.go             Listing 模型及状态转换
 ├── match_request.go       MatchRequest 模型及状态转换
 ├── matching.go            价格规则与候选选择
-├── protocol.go            宿主需要实现的最小能力接口
+├── protocol.go            当前调用方所需的最小能力接口
 ├── errors.go              可由 errors.Is / errors.As 识别的领域错误
 ├── *_test.go              与被测行为同包放置的测试
 ├── README.md
