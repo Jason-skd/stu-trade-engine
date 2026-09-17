@@ -2,7 +2,7 @@ package engine
 
 import "time"
 
-// MatchSource 表示撮合请求的发起方式。
+// MatchSource 表示撮合请求的发起方式。零值不是有效来源。
 type MatchSource uint8
 
 const (
@@ -14,7 +14,7 @@ const (
 	MatchSourceBuyerPurchase
 )
 
-// String 返回撮合来源的稳定文本值。
+// String 返回撮合来源的稳定文本值；无效来源返回 unknown。
 func (s MatchSource) String() string {
 	switch s {
 	case MatchSourceAutomatic:
@@ -32,7 +32,7 @@ func (s MatchSource) valid() bool {
 	return s >= MatchSourceAutomatic && s <= MatchSourceBuyerPurchase
 }
 
-// MatchRequestStatus 表示撮合请求状态。
+// MatchRequestStatus 表示撮合请求状态。零值不是有效状态。
 type MatchRequestStatus uint8
 
 const (
@@ -46,7 +46,7 @@ const (
 	MatchRequestStatusCancelled
 )
 
-// String 返回撮合请求状态的稳定文本值。
+// String 返回撮合请求状态的稳定文本值；无效状态返回 unknown。
 func (s MatchRequestStatus) String() string {
 	switch s {
 	case MatchRequestStatusPending:
@@ -62,7 +62,11 @@ func (s MatchRequestStatus) String() string {
 	}
 }
 
-// MatchRequest 表示一对买卖挂单之间的撮合请求。
+// MatchRequest 表示一对买卖挂单之间的撮合请求。零值无效，请求必须通过
+// NewMatchRequest 创建。
+//
+// 状态变更要求请求处于 pending，且时间非零并不早于 UpdatedAt。非法参数或空接收者
+// 返回 ValidationError，非法状态转换返回 TransitionError；失败不会修改请求。
 type MatchRequest struct {
 	id              string
 	buyListingID    string
@@ -77,7 +81,9 @@ type MatchRequest struct {
 	updatedAt       time.Time
 }
 
-// NewMatchRequest 创建状态为 pending 的撮合请求。
+// NewMatchRequest 创建状态为 pending 的撮合请求。ID 必须包含非空白字符，买卖挂单 ID
+// 必须不同，成交价和来源必须有效，创建时间不得为零；非法参数返回 ValidationError。
+// 自动撮合请求初始时双方均未确认，直接接单和购买请求初始时双方均已确认。
 func NewMatchRequest(
 	id, buyListingID, sellListingID string,
 	tradePrice Amount,
@@ -156,7 +162,8 @@ func (r MatchRequest) CreatedAt() time.Time { return r.createdAt }
 // UpdatedAt 返回撮合请求最近更新时间。
 func (r MatchRequest) UpdatedAt() time.Time { return r.updatedAt }
 
-// Confirm 记录指定交易方向参与方的确认；重复确认不改变请求。
+// Confirm 记录指定交易方向参与方的确认。首次确认要求有效方向和合法时间；已经确认的
+// 参与方再次确认是幂等操作，不修改请求，也不校验本次传入的时间。
 func (r *MatchRequest) Confirm(side Side, at time.Time) error {
 	// === 校验确认操作 ===
 	if err := r.ensurePending(MatchRequestStatusPending.String()); err != nil {
@@ -182,7 +189,8 @@ func (r *MatchRequest) Confirm(side Side, at time.Time) error {
 	return nil
 }
 
-// Complete 将双方已确认的待处理请求标记为已成交。
+// Complete 将双方已确认的待处理请求标记为已成交。orderRef 必须包含非空白字符；任一方
+// 尚未确认时返回 ErrConfirmationRequired。
 func (r *MatchRequest) Complete(orderRef string, at time.Time) error {
 	// === 校验完成条件 ===
 	if err := r.ensurePending(MatchRequestStatusCompleted.String()); err != nil {

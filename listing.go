@@ -2,12 +2,12 @@ package engine
 
 import "time"
 
-// Amount 表示以人民币分为单位的正整数金额。
+// Amount 表示以人民币分为单位的正整数金额。零值无效，金额必须通过 NewAmount 创建。
 type Amount struct {
 	cents int64
 }
 
-// NewAmount 创建金额。
+// NewAmount 创建金额。cents 必须为正数，否则返回可由 errors.As 识别的 ValidationError。
 func NewAmount(cents int64) (Amount, error) {
 	if cents <= 0 {
 		return Amount{}, &ValidationError{Field: "amount", Reason: "must be positive"}
@@ -24,7 +24,7 @@ func (a Amount) valid() bool {
 	return a.cents > 0
 }
 
-// Side 表示挂单的交易方向。
+// Side 表示挂单的交易方向。零值不是有效方向。
 type Side uint8
 
 const (
@@ -34,7 +34,7 @@ const (
 	SideSell
 )
 
-// String 返回交易方向的稳定文本值。
+// String 返回交易方向的稳定文本值；无效方向返回 unknown。
 func (s Side) String() string {
 	switch s {
 	case SideBuy:
@@ -50,7 +50,7 @@ func (s Side) valid() bool {
 	return s == SideBuy || s == SideSell
 }
 
-// ListingStatus 表示挂单状态。
+// ListingStatus 表示挂单状态。零值不是有效状态。
 type ListingStatus uint8
 
 const (
@@ -64,7 +64,7 @@ const (
 	ListingStatusWithdrawn
 )
 
-// String 返回挂单状态的稳定文本值。
+// String 返回挂单状态的稳定文本值；无效状态返回 unknown。
 func (s ListingStatus) String() string {
 	switch s {
 	case ListingStatusOpen:
@@ -80,7 +80,10 @@ func (s ListingStatus) String() string {
 	}
 }
 
-// Listing 表示一个通用买方需求或卖方供给。
+// Listing 表示一个通用买方需求或卖方供给。零值无效，挂单必须通过 NewListing 创建。
+//
+// 状态转换要求时间非零且不早于 UpdatedAt。非法时间或空接收者返回 ValidationError，
+// 非法状态转换返回 TransitionError；失败不会修改挂单。
 type Listing struct {
 	id          string
 	ownerID     string
@@ -92,7 +95,8 @@ type Listing struct {
 	updatedAt   time.Time
 }
 
-// NewListing 创建状态为 open 的挂单。
+// NewListing 创建状态为 open 的挂单。ID、所有者 ID 和资源引用必须包含非空白字符，
+// 方向和金额必须有效，创建时间不得为零；非法参数返回 ValidationError。
 func NewListing(id, ownerID, resourceRef string, side Side, price Amount, createdAt time.Time) (*Listing, error) {
 	// === 校验挂单字段 ===
 	if err := required("listing.id", id); err != nil {
