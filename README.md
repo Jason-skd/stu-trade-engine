@@ -4,7 +4,7 @@ StuTrade Engine 是通用撮合 Go module。它管理挂单、价格兼容、撮
 
 ## 当前能力
 
-- `Amount` 表示以最小货币单位计价的正整数金额。
+- `Amount` 表示以人民币分计价的正整数金额。
 - `Listing` 管理买卖方向以及 open、reserved、matched、withdrawn 状态转换。
 - `MatchRequest` 管理自动撮合和直接成交的确认与终态转换。
 - `RestoreMatchRequest` 校验撮合请求的持久化表示及来源关联。
@@ -42,6 +42,7 @@ errors.go          稳定领域错误
 
 ```bash
 test -z "$(gofmt -l .)"
+find .agents/skills -type f -name '*.sh' -print0 | xargs -0 bash -n
 go vet ./...
 go test ./...
 go test -race ./...

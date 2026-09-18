@@ -13,13 +13,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
           cache: true
       - name: Verify formatting
-        run: test -z "$(gofmt -l $(find . -name '*.go' -print))"
+        run: test -z "$(gofmt -l .)"
+      - name: Verify governance scripts
+        shell: bash
+        run: find .agents/skills -type f -name '*.sh' -print0 | xargs -0 bash -n
       - name: Run static analysis
         run: go vet ./...
       - name: Run tests
+        run: go test ./...
+      - name: Run tests with race detection
         run: go test -race ./...
+      - name: Verify module metadata
+        run: go mod tidy -diff
+      - name: Verify patch whitespace
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: git diff --check "$BASE_SHA" "$HEAD_SHA"

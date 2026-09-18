@@ -39,6 +39,20 @@ func TestReadListingsEmptyDoesNotCallDependency(t *testing.T) {
 	}
 }
 
+func TestReadListingRestoresRecord(t *testing.T) {
+	t.Parallel()
+
+	// === 读取单个挂单 ===
+	reader := &recordingListingReader{records: []ListingRecord{listingRecord("listing-1")}}
+	listing, err := ReadListing(context.Background(), reader, "listing-1")
+	if err != nil {
+		t.Fatalf("ReadListing() error = %v", err)
+	}
+	if listing.ID() != "listing-1" || !slices.Equal(reader.ids, []string{"listing-1"}) {
+		t.Fatalf("ReadListing() = (%q, ids %v)", listing.ID(), reader.ids)
+	}
+}
+
 func TestReadListingsRejectsInvalidRequest(t *testing.T) {
 	t.Parallel()
 
@@ -218,9 +232,19 @@ func TestWithdrawListingRejectsInvalidLockedRecords(t *testing.T) {
 func TestWithdrawListingPreservesDependencyFailures(t *testing.T) {
 	t.Parallel()
 
+	// === 校验缺失错误 ===
+	listing, err := WithdrawListing(
+		context.Background(),
+		&recordingListingWithdrawer{readErr: ErrListingNotFound},
+		withdrawInput(),
+	)
+	if !errors.Is(err, ErrListingNotFound) || listing != nil {
+		t.Fatalf("WithdrawListing() = (%v, %v), want nil and ErrListingNotFound", listing, err)
+	}
+
 	// === 校验读取错误 ===
 	readErr := errors.New("read failed")
-	_, err := WithdrawListing(context.Background(), &recordingListingWithdrawer{readErr: readErr}, withdrawInput())
+	_, err = WithdrawListing(context.Background(), &recordingListingWithdrawer{readErr: readErr}, withdrawInput())
 	if !errors.Is(err, readErr) {
 		t.Fatalf("WithdrawListing() read error = %v", err)
 	}
@@ -228,7 +252,7 @@ func TestWithdrawListingPreservesDependencyFailures(t *testing.T) {
 	// === 校验更新错误 ===
 	updateErr := errors.New("update failed")
 	withdrawer := &recordingListingWithdrawer{record: listingRecord("listing-1"), updateErr: updateErr}
-	listing, err := WithdrawListing(context.Background(), withdrawer, withdrawInput())
+	listing, err = WithdrawListing(context.Background(), withdrawer, withdrawInput())
 	if !errors.Is(err, updateErr) || listing != nil {
 		t.Fatalf("WithdrawListing() = (%v, %v), want nil and wrapped update error", listing, err)
 	}

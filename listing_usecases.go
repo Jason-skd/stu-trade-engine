@@ -88,6 +88,7 @@ func restoreListingRecords(ids []string, records []ListingRecord) ([]*Listing, e
 
 // WithdrawListingInput 是撤回挂单所需的宿主输入。
 type WithdrawListingInput struct {
+	// === runtime 字段 ===
 	ID        string
 	OwnerID   string
 	UpdatedAt time.Time

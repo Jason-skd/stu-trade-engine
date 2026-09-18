@@ -27,6 +27,7 @@ type ListingWithdrawer interface {
 // MatchParticipant 是宿主校验一方参与者、相关挂单与资源所需的通用事实。
 // 不适用于该撮合路径的 ListingID 或 ResourceRef 保持为空。
 type MatchParticipant struct {
+	// === runtime 字段 ===
 	ParticipantID string
 	ListingID     string
 	ResourceRef   string
@@ -34,6 +35,7 @@ type MatchParticipant struct {
 
 // MatchProposal 是宿主规则判断一次撮合所需的完整通用事实。
 type MatchProposal struct {
+	// === runtime 字段 ===
 	Buyer      MatchParticipant
 	Seller     MatchParticipant
 	TradePrice Amount
@@ -42,6 +44,7 @@ type MatchProposal struct {
 
 // TradeInput 是宿主创建唯一订单所需的通用成交事实。
 type TradeInput struct {
+	// === runtime 字段 ===
 	MatchRequestID string
 	BuyerID        string
 	SellerID       string

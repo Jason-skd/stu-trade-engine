@@ -99,7 +99,8 @@ comments.
 - **G049** Explanatory comments record reasons, constraints, or non-obvious
   tradeoffs rather than narrating clear code.
 - **G064** Except for `struct` field blocks governed by G065, code is organized
-  into logical blocks, each introduced by a `// === verb-objective phrase ===`
-  header that states what the block does.
+  into logical blocks, each introduced by a language-appropriate comment whose
+  text has the form `=== verb-objective phrase ===` and states what the block
+  does.
 - **G050** Comments describe current behavior only, not issue history, pull
   requests, governance clauses, migrations, or speculative future work.

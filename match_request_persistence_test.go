@@ -58,6 +58,14 @@ func TestRestoreMatchRequestRejectsInvalidRecord(t *testing.T) {
 		{name: "updated before created", change: func(r *MatchRequestRecord) { r.UpdatedAt = r.CreatedAt.Add(-time.Nanosecond) }, wantField: "match_request.updated_at"},
 		{name: "confirmation before created", change: func(r *MatchRequestRecord) { r.BuyerConfirmedAt = r.CreatedAt.Add(-time.Nanosecond) }, wantField: "match_request.buyer_confirmed_at"},
 		{name: "confirmation after updated", change: func(r *MatchRequestRecord) { r.BuyerConfirmedAt = r.UpdatedAt.Add(time.Nanosecond) }, wantField: "match_request.buyer_confirmed_at"},
+		{name: "seller confirmation before created", change: func(r *MatchRequestRecord) { r.SellerConfirmedAt = r.CreatedAt.Add(-time.Nanosecond) }, wantField: "match_request.seller_confirmed_at"},
+		{name: "seller confirmation after updated", change: func(r *MatchRequestRecord) { r.SellerConfirmedAt = r.UpdatedAt.Add(time.Nanosecond) }, wantField: "match_request.seller_confirmed_at"},
+		{name: "seller acceptance missing buy listing", change: func(r *MatchRequestRecord) {
+			r.Source, r.BuyListingID, r.SellListingID = MatchSourceSellerAccept, "", ""
+		}, wantField: "match_request.buy_listing_id"},
+		{name: "buyer purchase missing sell listing", change: func(r *MatchRequestRecord) {
+			r.Source, r.BuyListingID, r.SellListingID = MatchSourceBuyerPurchase, "", ""
+		}, wantField: "match_request.sell_listing_id"},
 		{name: "pending with order", change: func(r *MatchRequestRecord) { r.OrderRef = "order-1" }, wantField: "match_request.order_ref"},
 		{name: "completed without confirmation", change: func(r *MatchRequestRecord) { r.Status = MatchRequestStatusCompleted; r.OrderRef = "order-1" }, wantField: "match_request.confirmations"},
 		{name: "completed without order", change: func(r *MatchRequestRecord) {
