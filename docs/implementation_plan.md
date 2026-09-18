@@ -20,13 +20,15 @@ engine 是通用 Listing、MatchRequest 的唯一领域访问入口，并按用�
 - 宿主实现物理数据库适配；宿主业务代码不直接构造、恢复或修改 engine 实体。
 - 宿主按 Listing ID 或资源引用保存 ISBN、成色等业务资料，并组装 engine 状态、业务资料和 HTTP DTO，不复制价格、方向、状态或确认等通用事实。
 - 业务搜索可以先返回候选 Listing ID，engine 再批量取得通用状态；候选发现只缩小范围，不代替事务内最终检查。
-- 宿主规则负责 ISBN、自买限制和资源有效性。
-- 共享工作单元负责稳定加锁，并原子持久化 engine 状态、宿主业务扩展和订单。
+- 宿主通过 `MatchValidator` 负责 ISBN、自买限制和资源有效性；自动撮合把
+  `false, nil` 作为正常候选淘汰，把非空 error 返回给调用方。
+- 直接交易由 engine 在宿主 `WithTx` 回调内决定稳定锁顺序、复查和写入；宿主负责
+  物理事务、adapter 绑定以及 engine 状态、宿主业务扩展和订单的原子提交或回滚。
 - 订单创建由宿主提供，并以 MatchRequest 保证唯一。
 - engine 错误保持稳定，由宿主翻译为 HTTP 或数据库语义。
 - 当前用例没有任意宿主元数据读写需求，不引入 `Constants`、`Variables` 或空的对称扩展表。
 
-接口签名在首个真实宿主调用方落地时确定，不提前公开 `CandidateFinder` 或自动撮合工作单元的假定形态。直接成交已提供事务绑定的 `MatchPolicy`、`TradeCreator` 与持久化能力。
+接口签名在首个真实宿主调用方落地时确定，不提前公开 `CandidateFinder` 或自动撮合工作单元的假定形态。直接成交当前使用 `DirectTradeUnitOfWork`、`DirectTradeTransaction`、`MatchValidator`、`TradeCreator` 与批量 `ListingLocker`；旧的事务绑定入口与 `MatchPolicy` 不再保留。
 
 ## 实施顺序
 

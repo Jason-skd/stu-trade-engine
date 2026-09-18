@@ -40,13 +40,14 @@ type directTradeInput struct {
 	createdAt      time.Time
 }
 
-// PurchaseSellListing 在调用方提供的事务内按卖方报价直接购买开放的 Sell Listing。
+// PurchaseSellListing 在宿主工作单元内按卖方报价直接购买开放的 Sell Listing。
+// 宿主正常拒绝撮合时返回可由 errors.Is 识别的 ErrMatchRejected。
 func PurchaseSellListing(
 	ctx context.Context,
-	tx DirectTradeTransaction,
+	uow DirectTradeUnitOfWork,
 	input PurchaseSellListingInput,
 ) (DirectTradeResult, error) {
-	return completeDirectTrade(ctx, tx, directTradeInput{
+	return completeDirectTrade(ctx, uow, directTradeInput{
 		matchRequestID: input.MatchRequestID,
 		listingID:      input.SellListingID,
 		initiatorID:    input.BuyerID,
@@ -56,13 +57,14 @@ func PurchaseSellListing(
 	})
 }
 
-// AcceptBuyListing 在调用方提供的事务内按买方报价接受开放的 Buy Listing。
+// AcceptBuyListing 在宿主工作单元内按买方报价接受开放的 Buy Listing。
+// 宿主正常拒绝撮合时返回可由 errors.Is 识别的 ErrMatchRejected。
 func AcceptBuyListing(
 	ctx context.Context,
-	tx DirectTradeTransaction,
+	uow DirectTradeUnitOfWork,
 	input AcceptBuyListingInput,
 ) (DirectTradeResult, error) {
-	return completeDirectTrade(ctx, tx, directTradeInput{
+	return completeDirectTrade(ctx, uow, directTradeInput{
 		matchRequestID: input.MatchRequestID,
 		listingID:      input.BuyListingID,
 		initiatorID:    input.SellerID,
@@ -75,12 +77,12 @@ func AcceptBuyListing(
 
 func completeDirectTrade(
 	ctx context.Context,
-	tx DirectTradeTransaction,
+	uow DirectTradeUnitOfWork,
 	input directTradeInput,
 ) (DirectTradeResult, error) {
 	// === 校验直接成交输入 ===
-	if tx == nil {
-		return DirectTradeResult{}, &ValidationError{Field: "direct_trade_transaction", Reason: "must not be nil"}
+	if uow == nil {
+		return DirectTradeResult{}, &ValidationError{Field: "direct_trade_unit_of_work", Reason: "must not be nil"}
 	}
 	if err := required("match_request.id", input.matchRequestID); err != nil {
 		return DirectTradeResult{}, err
@@ -100,21 +102,51 @@ func completeDirectTrade(
 		return DirectTradeResult{}, &ValidationError{Field: "match_request.created_at", Reason: "must not be zero"}
 	}
 
+	// === 执行并提交直接成交事务 ===
+	var result DirectTradeResult
+	callbackCompleted := false
+	err := uow.WithTx(ctx, func(tx DirectTradeTransaction) error {
+		if tx == nil {
+			return &ValidationError{Field: "direct_trade_transaction", Reason: "must not be nil"}
+		}
+		completed, err := completeDirectTradeInTx(ctx, tx, input)
+		if err != nil {
+			return err
+		}
+		result = completed
+		callbackCompleted = true
+		return nil
+	})
+	if err != nil {
+		return DirectTradeResult{}, err
+	}
+	if !callbackCompleted {
+		return DirectTradeResult{}, &ValidationError{
+			Field:  "direct_trade_unit_of_work",
+			Reason: "must execute the transaction callback",
+		}
+	}
+	return result, nil
+}
+
+func completeDirectTradeInTx(
+	ctx context.Context,
+	tx DirectTradeTransaction,
+	input directTradeInput,
+) (DirectTradeResult, error) {
 	// === 锁定并恢复目标挂单 ===
-	record, err := tx.ReadListingForUpdate(ctx, input.listingID)
+	records, err := tx.ReadListingsForUpdate(ctx, []string{input.listingID})
 	if err != nil {
 		if errors.Is(err, ErrListingNotFound) {
 			return DirectTradeResult{}, fmt.Errorf("read listing %q for direct trade: %w", input.listingID, ErrListingNotFound)
 		}
 		return DirectTradeResult{}, fmt.Errorf("read listing %q for direct trade: %w", input.listingID, err)
 	}
-	listing, err := RestoreListing(record)
+	listings, err := restoreListingRecords([]string{input.listingID}, records)
 	if err != nil {
 		return DirectTradeResult{}, fmt.Errorf("restore listing %q for direct trade: %w", input.listingID, err)
 	}
-	if listing.ID() != input.listingID {
-		return DirectTradeResult{}, &ValidationError{Field: "listing.id", Reason: "must match the requested id"}
-	}
+	listing := listings[0]
 	if listing.Side() != input.expectedSide || listing.Status() != ListingStatusOpen {
 		return DirectTradeResult{}, fmt.Errorf("trade listing %q: %w", input.listingID, ErrListingUnavailable)
 	}
@@ -130,12 +162,25 @@ func completeDirectTrade(
 		buyListingID, sellListingID = listing.ID(), ""
 	}
 	proposal := MatchProposal{
-		BuyerID: buyerID, SellerID: sellerID, ResourceRef: resourceRef,
-		BuyListingID: buyListingID, SellListingID: sellListingID,
+		Buyer: MatchParticipant{ParticipantID: buyerID},
+		Seller: MatchParticipant{
+			ParticipantID: sellerID,
+			ListingID:     sellListingID,
+			ResourceRef:   resourceRef,
+		},
 		TradePrice: listing.Price(), Source: input.source,
 	}
-	if err := tx.EvaluateMatch(ctx, proposal); err != nil {
-		return DirectTradeResult{}, fmt.Errorf("evaluate direct trade: %w", err)
+	if input.source == MatchSourceSellerAccept {
+		proposal.Buyer.ListingID = buyListingID
+		proposal.Buyer.ResourceRef = listing.ResourceRef()
+		proposal.Seller.ListingID = ""
+	}
+	matched, err := tx.ValidateMatch(ctx, proposal)
+	if err != nil {
+		return DirectTradeResult{}, fmt.Errorf("validate direct trade: %w", err)
+	}
+	if !matched {
+		return DirectTradeResult{}, fmt.Errorf("validate direct trade: %w", ErrMatchRejected)
 	}
 
 	// === 创建已确认请求与宿主订单 ===
