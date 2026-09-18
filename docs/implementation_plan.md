@@ -8,10 +8,9 @@
 
 1. 撤回 reserved Listing，并取消关联 pending MatchRequest、释放有效的对手 Listing。
 2. 为指定 Listing 同步发现和排序候选。
-3. 在共享工作单元中锁定 Listing、重做规则检查并创建唯一 MatchRequest。
-4. 直接接受需求或购买供给，使用当前存在的目标 Listing 创建 completed MatchRequest 和宿主订单，不制造虚假反向 Listing。
-5. 幂等确认或拒绝 pending MatchRequest，并正确释放或完成 Listing。
-6. 查询宿主需要展示的 MatchRequest，但不承载领域搜索读模型。
+3. 在共享工作单元中锁定两张 Listing、重做规则检查并创建唯一 pending MatchRequest。
+4. 幂等确认或拒绝 pending MatchRequest，并正确释放或完成 Listing。
+5. 查询宿主需要展示的 MatchRequest，但不承载领域搜索读模型。
 
 ## 目标协作边界
 
@@ -27,16 +26,14 @@ engine 是通用 Listing、MatchRequest 的唯一领域访问入口，并按用�
 - engine 错误保持稳定，由宿主翻译为 HTTP 或数据库语义。
 - 当前用例没有任意宿主元数据读写需求，不引入 `Constants`、`Variables` 或空的对称扩展表。
 
-接口签名在首个真实宿主调用方落地时确定，不提前公开 `CandidateFinder`、`MatchPolicy`、`UnitOfWork` 或 `TradeCreator` 的假定形态。
+接口签名在首个真实宿主调用方落地时确定，不提前公开 `CandidateFinder` 或自动撮合工作单元的假定形态。直接成交已提供事务绑定的 `MatchPolicy`、`TradeCreator` 与持久化能力。
 
 ## 实施顺序
 
-1. 从主动购买纵切提取规则和订单创建能力，并调整直接成交模型以只引用真实存在的 Listing。
-2. 复用相同核心实现卖方接单，避免 mode 驱动的平行流程。
-3. 加入候选排序和自动撮合，创建 pending MatchRequest。
-4. 加入确认、拒绝和 reserved Listing 撤回协作。
-5. 根据宿主组装和查询入口补充 MatchRequest 的最小读取能力。
-6. 通过主仓库真实 PostgreSQL 适配和跨仓库测试验证协议。
+1. 加入候选排序和自动撮合，创建 pending MatchRequest。
+2. 加入确认、拒绝和 reserved Listing 撤回协作。
+3. 根据宿主组装和查询入口补充 MatchRequest 的最小读取能力。
+4. 通过主仓库真实 PostgreSQL 适配和跨仓库测试验证直接成交及后续协议。
 
 ## 验证目标
 

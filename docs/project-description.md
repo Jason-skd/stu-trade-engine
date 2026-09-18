@@ -24,7 +24,7 @@ open -----> reserved -----> matched
 
 ## MatchRequest
 
-MatchRequest 记录买卖双方 Listing、成交价、来源、双方确认、状态、宿主订单引用和时间。状态转换为：
+MatchRequest 记录买卖参与者、实际交付资源、真实存在的相关 Listing、成交价、来源、双方确认时间、状态、宿主订单引用和时间。自动撮合关联买卖双方 Listing；买方购买只关联目标 Sell Listing；卖方接单只关联目标 Buy Listing。状态转换为：
 
 ```text
 pending -----> completed
@@ -56,6 +56,12 @@ interface 由 engine 的消费方定义，只包含当前用例需要的能力�
 再校验所有者与状态。open Listing 被改为 withdrawn；同一所有者重复撤回已 withdrawn
 Listing 幂等成功；reserved 与 matched 状态保持不可撤回。宿主负责将该能力装配在
 与业务资料相同的物理事务中。关联 MatchRequest 的取消与对手 Listing 释放尚未加入。
+
+`PurchaseSellListing` 与 `AcceptBuyListing` 消费事务绑定的 `DirectTradeTransaction`。
+两条入口共享同一核心：锁定并恢复目标 Listing，确认方向与 open 状态，交给宿主
+`MatchPolicy` 校验业务规则，创建已确认的 MatchRequest 和幂等宿主订单，再完成请求
+及目标 Listing。买方购买按 Sell Listing 报价成交；卖方接单按 Buy Listing 报价成交并
+使用卖方提交的真实交付资源。任一步骤失败时，调用方事务负责回滚全部写入。
 
 ## 所有权
 
