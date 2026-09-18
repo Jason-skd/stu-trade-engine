@@ -200,6 +200,19 @@ func TestDirectTradeRejectsInvalidLockedRecords(t *testing.T) {
 	}
 }
 
+func TestDirectTradePreservesNotFoundIdentityBeforeWrites(t *testing.T) {
+	t.Parallel()
+
+	// === 返回挂单缺失错误 ===
+	uow := newRecordingDirectTradeUnitOfWork(SideSell, "seller-1", "book-1")
+	uow.state.failStage, uow.state.failure = "read_listings_for_update", ErrListingNotFound
+	result, err := PurchaseSellListing(context.Background(), uow, validPurchaseInput())
+	if !errors.Is(err, ErrListingNotFound) || result != (DirectTradeResult{}) {
+		t.Fatalf("PurchaseSellListing() = (%+v, %v), want zero result and ErrListingNotFound", result, err)
+	}
+	assertNoDirectTradeWrites(t, uow.state)
+}
+
 func TestDirectTradeRejectsStaleTimeBeforeWrites(t *testing.T) {
 	t.Parallel()
 
@@ -209,6 +222,19 @@ func TestDirectTradeRejectsStaleTimeBeforeWrites(t *testing.T) {
 	input.CreatedAt = testTime.Add(-time.Nanosecond)
 	_, err := PurchaseSellListing(context.Background(), uow, input)
 	assertValidationError(t, err, "listing.updated_at")
+	assertNoDirectTradeWrites(t, uow.state)
+}
+
+func TestDirectTradeRejectsSameParticipantBeforeWrites(t *testing.T) {
+	t.Parallel()
+
+	// === 提交自成交请求 ===
+	uow := newRecordingDirectTradeUnitOfWork(SideSell, "buyer-1", "book-1")
+	result, err := PurchaseSellListing(context.Background(), uow, validPurchaseInput())
+	assertValidationError(t, err, "match_request.participant_ids")
+	if result != (DirectTradeResult{}) {
+		t.Fatalf("PurchaseSellListing() result = %+v, want zero result", result)
+	}
 	assertNoDirectTradeWrites(t, uow.state)
 }
 
