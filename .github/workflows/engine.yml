@@ -21,6 +21,9 @@ jobs:
           cache: true
       - name: Verify formatting
         run: test -z "$(gofmt -l .)"
+      - name: Verify governance scripts
+        shell: bash
+        run: find .agents/skills -type f -name '*.sh' -print0 | xargs -0 bash -n
       - name: Run static analysis
         run: go vet ./...
       - name: Run tests

@@ -8,8 +8,10 @@ description: Design or adjust PR, main, and production delivery gates around a r
 Read `docs/governance/delivery.md`, the repository supplement, existing
 workflows, build definitions, artifact stores, deployment targets, and release
 evidence. Establish which stages the repository actually owns before proposing
-or changing automation. Use `seeds/delivery/pipeline.md` as a question set, not
-as a workflow to copy unchanged.
+or changing automation. When the common-governance source is available, use
+its optional `seeds/delivery/pipeline.md` as a question set, not as a workflow
+to copy unchanged. Its absence does not block an audit based on the delivery
+rules and repository evidence.
 
 Ensure the pull-request gate proves merge readiness, the main gate evaluates
 every exact `main` revision and certifies its artifact, and later delivery

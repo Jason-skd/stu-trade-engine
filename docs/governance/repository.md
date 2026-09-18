@@ -7,8 +7,10 @@ verification, GitHub work, and delivery evidence.
 ## Repository Actions
 
 - **R-A003** Before completion, run
-  `test -z "$(gofmt -l .)"`, `go vet ./...`, `go test ./...`,
-  `go test -race ./...`, `go mod tidy -diff`, and `git diff --check`.
+  `test -z "$(gofmt -l .)"`,
+  `find .agents/skills -type f -name '*.sh' -print0 | xargs -0 bash -n`,
+  `go vet ./...`, `go test ./...`, `go test -race ./...`,
+  `go mod tidy -diff`, and `git diff --check`.
 
 ## Authority and Ownership
 

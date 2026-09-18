@@ -5,11 +5,17 @@ description: Audit and coordinate GitHub labels, SemVer milestones, issue forms,
 
 # GitHub Work Management
 
-Inspect the target repository governance and the seed definitions under
-`seeds/github/`. Verify authentication and repository identity, then audit the
-current labels, milestones, issue forms, and pull-request template without
-mutation. Use `scripts/audit-labels.sh OWNER/REPO LABELS_YML` to compare labels
-through authenticated `gh` reads and YAML parsing managed by `uv`.
+Inspect the target repository governance, then resolve the common-governance
+source when seed comparison is requested. If that source provides
+`seeds/github/`, treat those definitions as optional starting points rather
+than target requirements. If no source is available, audit the target directly
+against its current governance and report that seed comparison was omitted.
+
+Verify authentication and repository identity, then audit the current labels,
+milestones, issue forms, and pull-request template without mutation. Use the
+managed `scripts/audit-labels.sh OWNER/REPO LABELS_YML` when a label definition
+has been explicitly selected; it compares labels through authenticated `gh`
+reads and YAML parsing managed by `uv`.
 
 Report the exact additions, updates, conflicts, and removals proposed. Obtain
 explicit user authorization naming the target repository and remote action
