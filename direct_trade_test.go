@@ -285,16 +285,22 @@ func TestConcurrentDirectTradesCreateOneTrade(t *testing.T) {
 	}
 
 	// === 验证唯一成交 ===
+	deadline := time.NewTimer(time.Second)
+	defer deadline.Stop()
 	successes, unavailable := 0, 0
 	for range 2 {
-		err := <-errorsByBuyer
-		switch {
-		case err == nil:
-			successes++
-		case errors.Is(err, ErrListingUnavailable):
-			unavailable++
-		default:
-			t.Fatalf("concurrent trade error = %v", err)
+		select {
+		case err := <-errorsByBuyer:
+			switch {
+			case err == nil:
+				successes++
+			case errors.Is(err, ErrListingUnavailable):
+				unavailable++
+			default:
+				t.Fatalf("concurrent trade error = %v", err)
+			}
+		case <-deadline.C:
+			t.Fatal("concurrent direct trades timed out")
 		}
 	}
 	if successes != 1 || unavailable != 1 || len(uow.state.requests) != 1 || len(uow.state.orders) != 1 {
