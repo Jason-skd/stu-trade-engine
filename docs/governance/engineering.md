@@ -6,6 +6,9 @@ comments.
 
 ## Modeling
 
+- **A036** Before changing a `struct` declaration or protocol contract, present
+  the proposed `struct` or protocol definition as a code snippet and wait for
+  the user's approval.
 - **G021** The implementation models complete current requirements without
   fields, operations, abstractions, directories, or public capabilities for
   hypothetical future needs.
@@ -13,9 +16,18 @@ comments.
   reader, writer, or explicitly named owner.
 - **G023** Keys, constraints, and operations follow real queries and invariants
   rather than a generic CRUD shape.
-- **G024** Structural correctness is enforced by the most authoritative layer
-  that can express it; other layers do not duplicate its constraints or side
-  effects.
+- **G024** Data integrity and structural correctness are enforced by the most
+  authoritative schema, type, or contract layer that can express each
+  invariant—for example, database keys, constraints, foreign keys, checks, and
+  database-owned triggers, or non-database types, schemas, and protocol
+  definitions. Business code may provide earlier error reporting, but does not
+  replace authoritative enforcement or rely on callers repeating template
+  logic.
+- **G065** A data-model `struct` groups each field under the exact applicable
+  header below, and each header appears if and only if at least one such field
+  exists: `// === persistent 字段 ===` for directly persisted fields,
+  `// === schema 字段 ===` for schema-derived fields such as JOIN results, and
+  `// === runtime 字段 ===` for in-memory-only fields.
 
 ## Reuse and Responsibilities
 
@@ -86,7 +98,8 @@ comments.
   non-public contracts are documented when names and code are insufficient.
 - **G049** Explanatory comments record reasons, constraints, or non-obvious
   tradeoffs rather than narrating clear code.
-- **G064** Code is organized into logical blocks, each introduced by a
-  `// === verb-objective phrase ===` header that states what the block does.
+- **G064** Except for `struct` field blocks governed by G065, code is organized
+  into logical blocks, each introduced by a `// === verb-objective phrase ===`
+  header that states what the block does.
 - **G050** Comments describe current behavior only, not issue history, pull
   requests, governance clauses, migrations, or speculative future work.

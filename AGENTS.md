@@ -33,20 +33,9 @@ specific; they cannot silently weaken it.
   a clean worktree.
 - **A011** Do not claim behavior, test results, generated state, or external
   outcomes that were not observed on the applicable checkout.
-
-## Rule Identities
-
-- **A012** Give each normative rule exactly one permanent identity. Common
-  action rules use `A`; common acceptance rules use `G`; repository action and
-  acceptance supplements use `R-A` and `R-G`.
-- **A013** Add a rule with the next unused maximum number in its family. Keep
-  its ID when moving it, never reuse a deleted ID, and never continue common
-  numbering in a repository-specific family.
-
-Action rules describe how work is performed. Acceptance rules describe facts
-that can be checked afterward from the complete pull-request diff, commits,
-tests, and recorded verification. Pull-request checklists cover `G` and `R-G`
-rules only; violations of `A` or `R-A` remain concrete review findings.
+- **A040** The repository containing the agent's startup working directory is
+  the only default write scope. Writing another repository requires explicit
+  user authorization naming that repository and the requested action.
 
 ## Governance Routing
 
@@ -63,6 +52,10 @@ rules only; violations of `A` or `R-A` remain concrete review findings.
   ownership, architecture, protocols, tools, validation, and release rules.
 - **A018** Load every applicable governance file for a cross-cutting task, but
   do not load unrelated material merely because it exists.
+- **A044** For rule identities, governance promotion, seeds, or skill
+  boundaries, read [`docs/governance/meta.md`](docs/governance/meta.md).
+- **A045** For pull-request, main-branch, artifact, deployment, or release
+  gates, read [`docs/governance/delivery.md`](docs/governance/delivery.md).
 
 ## Skill Routing
 
@@ -82,3 +75,17 @@ rules only; violations of `A` or `R-A` remain concrete review findings.
 - **A023** Use
   [`.agents/skills/cross-repository-escalation`](.agents/skills/cross-repository-escalation/SKILL.md)
   before a required change or handoff crosses repository ownership.
+- **A046** Use
+  [`.agents/skills/repository-bootstrap`](.agents/skills/repository-bootstrap/SKILL.md)
+  to initialize governance in an explicitly authorized repository from the
+  available seeds.
+- **A047** Use
+  [`.agents/skills/governance-sync`](.agents/skills/governance-sync/SKILL.md)
+  to compare or update a repository against the managed common baseline.
+- **A048** Use
+  [`.agents/skills/github-work-management`](.agents/skills/github-work-management/SKILL.md)
+  to audit or coordinate GitHub labels, milestones, issue forms, and pull
+  request templates.
+- **A049** Use
+  [`.agents/skills/delivery-pipeline`](.agents/skills/delivery-pipeline/SKILL.md)
+  to design or adjust delivery gates and immutable artifact promotion.

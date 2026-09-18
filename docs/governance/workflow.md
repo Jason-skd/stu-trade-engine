@@ -12,9 +12,8 @@ pull requests, and documentation.
 - **A026** Treat every independently pure documentation update—where the
   task's only requirement is changing documentation—as an emergency repair.
   Commit and push it directly to `main`; never create a `docs/` branch for it.
-- **A027** For every other change, work on a branch other than `main` and merge
-  through a pull request unless repository governance or an explicit task
-  instruction establishes a different workflow.
+- **A027** For every other change, work on a branch other than `main` and open a
+  pull request unless repository governance establishes a different workflow.
 - **A028** Rebase private work onto `main`; never rebase `main` itself.
 - **A029** Stage explicit task-owned paths and inspect the staged diff before
   committing so unrelated workspace changes remain untouched.
@@ -22,6 +21,11 @@ pull requests, and documentation.
   destructive targets with read-only checks before acting.
 - **A031** Before mutating a remote service, verify authentication, repository
   identity, target revision, and the exact resource being changed.
+- **A037** Only the user may merge pull requests. Agents do not merge pull
+  requests or enable auto-merge.
+- **A038** Preserve task-owned local worktrees, local branches, workspace
+  entries, and remote branches unless the user explicitly requests “清理环境”.
+  Opening or observing a merged pull request does not authorize cleanup.
 
 ## Commit Acceptance
 
@@ -43,6 +47,16 @@ pull requests, and documentation.
 - **G007** Issues and pull requests reference relevant tracking work and state
   explicitly whether they close it. Labels and milestones are used only when
   they convey real project information.
+- **G070** Direction, deliverable, governance, and bug work item roles are
+  mutually exclusive. A work item has exactly one of these responsibilities.
+- **G071** A milestone represents a release version and contains only leaf
+  deliverables and bugs targeted to that version. Direction, governance, and
+  pull requests do not receive milestones.
+- **G072** A pull request is a delivery vehicle and uses a closing keyword such
+  as `Closes` to close each leaf work item it completes; the pull request does
+  not replace that work item.
+- **G073** Labels do not duplicate relationships, ownership, milestones, or
+  state that can be derived from the pull request lifecycle.
 
 ## Pull Request Acceptance
 

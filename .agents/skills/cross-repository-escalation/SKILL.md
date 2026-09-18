@@ -11,16 +11,24 @@ or common product does not extend write authority.
 
 Identify the owning repository and collect enough current, reproducible
 read-only evidence for a handoff. Do not create branches, edit files, commit,
-open pull requests, or push in another repository without explicit authority
-naming that target.
+open issues or pull requests, comment, message maintainers, or push in another
+repository without explicit authority naming that target and action.
 
-When issue creation is authorized, file the handoff in the owning repository
-using its issue structure. Include the affected contract and current evidence,
-blocking impact, owner-side direction without unsupported detail, observable
-acceptance, and any revision required by consumers. Report the link and stop the
-blocked portion until the owner produces a merged revision.
+For repositories in the same organization and system, inspect read-only
+evidence across the topology. If target-repository writing is not authorized,
+prepare an Emergency Handoff containing the affected contract, evidence,
+blocking impact, compatibility constraints, owner-side direction, observable
+acceptance, and consumer revision requirement. Confirm the target repository
+and issue-creation action before filing it. If the user has already given
+equally specific target write authority, implement only within that scope.
 
-Afterward, verify that revision and modify only the currently authorized
-repository to consume it, update pinned references or integration metadata, and
-run relevant integration checks. Continue unrelated in-scope work only when it
-does not assume the pending owner change.
+For an external upstream, instead prepare a user-facing formal statement of
+evidence, impact, compatibility, and viable strategy options. Wait for the user
+to decide whether and how to contact upstream; never proactively create an
+issue, comment, or message.
+
+Stop the blocked portion until the owner produces a merged revision. Only after
+verifying that revision may work in a currently authorized consumer update its
+pin, gitlink, adapter, or integration metadata and run the relevant integration
+checks. Continue unrelated in-scope work only when it does not assume the
+pending owner change.
