@@ -150,6 +150,7 @@ func NewListing(id, ownerID, resourceRef string, side Side, price Amount, create
 
 // RestoreListing 从逻辑持久化表示恢复并校验 Listing。损坏的持久化数据返回 ValidationError。
 func RestoreListing(record ListingRecord) (*Listing, error) {
+	// === 校验持久化字段 ===
 	if err := required("listing.id", record.ID); err != nil {
 		return nil, err
 	}
@@ -179,6 +180,7 @@ func RestoreListing(record ListingRecord) (*Listing, error) {
 		return nil, &ValidationError{Field: "listing.updated_at", Reason: "must not be before the creation time"}
 	}
 
+	// === 恢复挂单状态 ===
 	return &Listing{
 		id: record.ID, ownerID: record.OwnerID, resourceRef: record.ResourceRef,
 		side: record.Side, price: price, status: record.Status,

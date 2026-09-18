@@ -8,12 +8,15 @@ import (
 func TestRestoreListingRoundTrip(t *testing.T) {
 	t.Parallel()
 
+	// === 定义挂单状态 ===
 	statuses := []ListingStatus{
 		ListingStatusOpen,
 		ListingStatusReserved,
 		ListingStatusMatched,
 		ListingStatusWithdrawn,
 	}
+
+	// === 验证持久化往返 ===
 	for _, status := range statuses {
 		status := status
 		t.Run(status.String(), func(t *testing.T) {
@@ -36,6 +39,7 @@ func TestRestoreListingRoundTrip(t *testing.T) {
 func TestRestoreListingRejectsInvalidRecord(t *testing.T) {
 	t.Parallel()
 
+	// === 定义非法记录 ===
 	tests := []struct {
 		name      string
 		change    func(*ListingRecord)
@@ -52,6 +56,7 @@ func TestRestoreListingRejectsInvalidRecord(t *testing.T) {
 		{name: "updated before created", change: func(r *ListingRecord) { r.UpdatedAt = r.CreatedAt.Add(-time.Nanosecond) }, wantField: "listing.updated_at"},
 	}
 
+	// === 验证记录校验 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

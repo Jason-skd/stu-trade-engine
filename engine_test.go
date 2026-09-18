@@ -9,6 +9,7 @@ import (
 func TestPublishListingCreatesOpenListing(t *testing.T) {
 	t.Parallel()
 
+	// === 准备发布请求 ===
 	creator := &recordingListingCreator{}
 	input := PublishListingInput{
 		ID:          "listing-1",
@@ -19,6 +20,7 @@ func TestPublishListingCreatesOpenListing(t *testing.T) {
 		CreatedAt:   testTime,
 	}
 
+	// === 发布并校验挂单 ===
 	listing, err := PublishListing(context.Background(), creator, input)
 	if err != nil {
 		t.Fatalf("PublishListing() error = %v", err)
@@ -37,6 +39,7 @@ func TestPublishListingCreatesOpenListing(t *testing.T) {
 func TestPublishListingRejectsInvalidInputBeforePersistence(t *testing.T) {
 	t.Parallel()
 
+	// === 发布非法挂单 ===
 	creator := &recordingListingCreator{}
 	listing, err := PublishListing(context.Background(), creator, PublishListingInput{})
 	assertValidationError(t, err, "listing.id")
@@ -48,6 +51,7 @@ func TestPublishListingRejectsInvalidInputBeforePersistence(t *testing.T) {
 func TestPublishListingPreservesPersistenceFailure(t *testing.T) {
 	t.Parallel()
 
+	// === 模拟持久化失败 ===
 	wantErr := errors.New("storage unavailable")
 	creator := &recordingListingCreator{err: wantErr}
 	listing, err := PublishListing(context.Background(), creator, PublishListingInput{
@@ -58,6 +62,8 @@ func TestPublishListingPreservesPersistenceFailure(t *testing.T) {
 		Price:       mustAmount(t, 2500),
 		CreatedAt:   testTime,
 	})
+
+	// === 校验错误传播 ===
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("PublishListing() error = %v, want wrapped persistence error", err)
 	}
@@ -69,6 +75,7 @@ func TestPublishListingPreservesPersistenceFailure(t *testing.T) {
 func TestPublishListingRejectsNilCreator(t *testing.T) {
 	t.Parallel()
 
+	// === 发布缺少依赖的挂单 ===
 	listing, err := PublishListing(context.Background(), nil, PublishListingInput{})
 	assertValidationError(t, err, "listing_creator")
 	if listing != nil {

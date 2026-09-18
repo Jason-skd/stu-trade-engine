@@ -18,6 +18,7 @@ func ReadListing(ctx context.Context, reader ListingReader, id string) (*Listing
 
 // ReadListings 按输入 ID 顺序批量读取并恢复 Listing。
 func ReadListings(ctx context.Context, reader ListingReader, ids []string) ([]*Listing, error) {
+	// === 校验读取请求 ===
 	if reader == nil {
 		return nil, &ValidationError{Field: "listing_reader", Reason: "must not be nil"}
 	}
@@ -36,10 +37,13 @@ func ReadListings(ctx context.Context, reader ListingReader, ids []string) ([]*L
 		wanted[id] = struct{}{}
 	}
 
+	// === 读取持久化记录 ===
 	records, err := reader.ReadListings(ctx, ids)
 	if err != nil {
 		return nil, fmt.Errorf("read listings: %w", err)
 	}
+
+	// === 恢复挂单实体 ===
 	byID := make(map[string]*Listing, len(records))
 	for _, record := range records {
 		if _, expected := wanted[record.ID]; !expected {
@@ -55,6 +59,7 @@ func ReadListings(ctx context.Context, reader ListingReader, ids []string) ([]*L
 		byID[record.ID] = listing
 	}
 
+	// === 重建请求顺序 ===
 	listings := make([]*Listing, 0, len(ids))
 	for _, id := range ids {
 		listing, ok := byID[id]
@@ -76,6 +81,7 @@ type WithdrawListingInput struct {
 // WithdrawListing 在调用方提供的事务内锁定并撤回 open Listing。
 // 已由同一所有者撤回的 Listing 幂等成功。
 func WithdrawListing(ctx context.Context, withdrawer ListingWithdrawer, input WithdrawListingInput) (*Listing, error) {
+	// === 校验撤回请求 ===
 	if withdrawer == nil {
 		return nil, &ValidationError{Field: "listing_withdrawer", Reason: "must not be nil"}
 	}
@@ -89,6 +95,7 @@ func WithdrawListing(ctx context.Context, withdrawer ListingWithdrawer, input Wi
 		return nil, &ValidationError{Field: "listing.updated_at", Reason: "must not be zero"}
 	}
 
+	// === 锁定并恢复挂单 ===
 	record, err := withdrawer.ReadListingForUpdate(ctx, input.ID)
 	if err != nil {
 		if errors.Is(err, ErrListingNotFound) {
@@ -103,12 +110,16 @@ func WithdrawListing(ctx context.Context, withdrawer ListingWithdrawer, input Wi
 	if listing.ID() != input.ID {
 		return nil, &ValidationError{Field: "listing.id", Reason: "must match the requested id"}
 	}
+
+	// === 校验撤回权限 ===
 	if listing.OwnerID() != input.OwnerID {
 		return nil, fmt.Errorf("withdraw listing %q: %w", input.ID, ErrListingNotOwned)
 	}
 	if listing.Status() == ListingStatusWithdrawn {
 		return listing, nil
 	}
+
+	// === 撤回并持久化挂单 ===
 	if err := listing.Withdraw(input.UpdatedAt); err != nil {
 		return nil, err
 	}

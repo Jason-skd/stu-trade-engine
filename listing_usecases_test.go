@@ -10,6 +10,7 @@ import (
 func TestReadListingsRestoresInputOrder(t *testing.T) {
 	t.Parallel()
 
+	// === 读取逆序记录 ===
 	reader := &recordingListingReader{records: []ListingRecord{listingRecord("listing-2"), listingRecord("listing-1")}}
 	listings, err := ReadListings(context.Background(), reader, []string{"listing-1", "listing-2"})
 	if err != nil {
@@ -26,6 +27,7 @@ func TestReadListingsRestoresInputOrder(t *testing.T) {
 func TestReadListingsEmptyDoesNotCallDependency(t *testing.T) {
 	t.Parallel()
 
+	// === 读取空列表 ===
 	reader := &recordingListingReader{}
 	listings, err := ReadListings(context.Background(), reader, nil)
 	if err != nil {
@@ -39,6 +41,7 @@ func TestReadListingsEmptyDoesNotCallDependency(t *testing.T) {
 func TestReadListingsRejectsInvalidRequest(t *testing.T) {
 	t.Parallel()
 
+	// === 定义非法请求 ===
 	tests := []struct {
 		name      string
 		reader    ListingReader
@@ -49,6 +52,8 @@ func TestReadListingsRejectsInvalidRequest(t *testing.T) {
 		{name: "blank id", reader: &recordingListingReader{}, ids: []string{" "}, wantField: "listing.id"},
 		{name: "duplicate id", reader: &recordingListingReader{}, ids: []string{"listing-1", "listing-1"}, wantField: "listing.ids"},
 	}
+
+	// === 验证请求校验 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -61,6 +66,7 @@ func TestReadListingsRejectsInvalidRequest(t *testing.T) {
 func TestReadListingsRejectsInvalidResponse(t *testing.T) {
 	t.Parallel()
 
+	// === 定义非法响应 ===
 	tests := []struct {
 		name      string
 		records   []ListingRecord
@@ -72,6 +78,8 @@ func TestReadListingsRejectsInvalidResponse(t *testing.T) {
 		{name: "duplicate record", records: []ListingRecord{listingRecord("listing-1"), listingRecord("listing-1")}, wantField: "listing.records"},
 		{name: "corrupt record", records: []ListingRecord{{ID: "listing-1"}}, wantField: "listing.owner_id"},
 	}
+
+	// === 验证响应校验 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -90,6 +98,7 @@ func TestReadListingsRejectsInvalidResponse(t *testing.T) {
 func TestReadListingPreservesDependencyFailure(t *testing.T) {
 	t.Parallel()
 
+	// === 读取依赖失败 ===
 	wantErr := errors.New("storage unavailable")
 	_, err := ReadListing(context.Background(), &recordingListingReader{err: wantErr}, "listing-1")
 	if !errors.Is(err, wantErr) {
@@ -100,6 +109,7 @@ func TestReadListingPreservesDependencyFailure(t *testing.T) {
 func TestWithdrawListingWithdrawsOpenListing(t *testing.T) {
 	t.Parallel()
 
+	// === 撤回开放挂单 ===
 	withdrawer := &recordingListingWithdrawer{record: listingRecord("listing-1")}
 	listing, err := WithdrawListing(context.Background(), withdrawer, withdrawInput())
 	if err != nil {
@@ -116,10 +126,13 @@ func TestWithdrawListingWithdrawsOpenListing(t *testing.T) {
 func TestWithdrawListingIsIdempotentForOwner(t *testing.T) {
 	t.Parallel()
 
+	// === 准备已撤回挂单 ===
 	record := listingRecord("listing-1")
 	record.Status = ListingStatusWithdrawn
 	record.UpdatedAt = testTime.Add(time.Minute)
 	withdrawer := &recordingListingWithdrawer{record: record}
+
+	// === 重复撤回挂单 ===
 	listing, err := WithdrawListing(context.Background(), withdrawer, withdrawInput())
 	if err != nil {
 		t.Fatalf("WithdrawListing() error = %v", err)
@@ -132,6 +145,7 @@ func TestWithdrawListingIsIdempotentForOwner(t *testing.T) {
 func TestWithdrawListingRejectsUnavailableState(t *testing.T) {
 	t.Parallel()
 
+	// === 验证不可撤回状态 ===
 	for _, status := range []ListingStatus{ListingStatusReserved, ListingStatusMatched} {
 		status := status
 		t.Run(status.String(), func(t *testing.T) {
@@ -151,6 +165,7 @@ func TestWithdrawListingRejectsUnavailableState(t *testing.T) {
 func TestWithdrawListingRejectsNonOwner(t *testing.T) {
 	t.Parallel()
 
+	// === 尝试越权撤回 ===
 	withdrawer := &recordingListingWithdrawer{record: listingRecord("listing-1")}
 	input := withdrawInput()
 	input.OwnerID = "user-2"
@@ -163,6 +178,7 @@ func TestWithdrawListingRejectsNonOwner(t *testing.T) {
 func TestWithdrawListingRejectsMismatchedLockedRecord(t *testing.T) {
 	t.Parallel()
 
+	// === 读取不匹配记录 ===
 	withdrawer := &recordingListingWithdrawer{record: listingRecord("listing-2")}
 	_, err := WithdrawListing(context.Background(), withdrawer, withdrawInput())
 	assertValidationError(t, err, "listing.id")
@@ -174,12 +190,14 @@ func TestWithdrawListingRejectsMismatchedLockedRecord(t *testing.T) {
 func TestWithdrawListingPreservesDependencyFailures(t *testing.T) {
 	t.Parallel()
 
+	// === 校验读取错误 ===
 	readErr := errors.New("read failed")
 	_, err := WithdrawListing(context.Background(), &recordingListingWithdrawer{readErr: readErr}, withdrawInput())
 	if !errors.Is(err, readErr) {
 		t.Fatalf("WithdrawListing() read error = %v", err)
 	}
 
+	// === 校验更新错误 ===
 	updateErr := errors.New("update failed")
 	withdrawer := &recordingListingWithdrawer{record: listingRecord("listing-1"), updateErr: updateErr}
 	listing, err := WithdrawListing(context.Background(), withdrawer, withdrawInput())
@@ -191,6 +209,7 @@ func TestWithdrawListingPreservesDependencyFailures(t *testing.T) {
 func TestWithdrawListingRejectsInvalidInputBeforeRead(t *testing.T) {
 	t.Parallel()
 
+	// === 定义非法输入 ===
 	tests := []struct {
 		name       string
 		withdrawer ListingWithdrawer
@@ -202,6 +221,8 @@ func TestWithdrawListingRejectsInvalidInputBeforeRead(t *testing.T) {
 		{name: "missing owner", withdrawer: &recordingListingWithdrawer{}, input: WithdrawListingInput{ID: "listing-1", UpdatedAt: testTime}, wantField: "listing.owner_id"},
 		{name: "missing time", withdrawer: &recordingListingWithdrawer{}, input: WithdrawListingInput{ID: "listing-1", OwnerID: "user-1"}, wantField: "listing.updated_at"},
 	}
+
+	// === 验证读取前校验 ===
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
