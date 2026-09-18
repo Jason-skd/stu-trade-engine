@@ -11,27 +11,32 @@ func TestNewMatchRequest(t *testing.T) {
 
 	// === 定义测试用例 ===
 	price := mustAmount(t, 2000)
+	valid := MatchRequestInput{
+		ID: "request-1", BuyerID: "buyer-1", SellerID: "seller-1", ResourceRef: "resource-1",
+		BuyListingID: "buy-1", SellListingID: "sell-1", TradePrice: price,
+		Source: MatchSourceAutomatic, CreatedAt: testTime,
+	}
 	tests := []struct {
 		name          string
-		id            string
-		buyListingID  string
-		sellListingID string
-		tradePrice    Amount
-		source        MatchSource
-		createdAt     time.Time
+		input         MatchRequestInput
 		wantField     string
 		wantConfirmed bool
 	}{
-		{name: "automatic", id: "request-1", buyListingID: "buy-1", sellListingID: "sell-1", tradePrice: price, source: MatchSourceAutomatic, createdAt: testTime},
-		{name: "seller accept", id: "request-1", buyListingID: "buy-1", sellListingID: "sell-1", tradePrice: price, source: MatchSourceSellerAccept, createdAt: testTime, wantConfirmed: true},
-		{name: "buyer purchase", id: "request-1", buyListingID: "buy-1", sellListingID: "sell-1", tradePrice: price, source: MatchSourceBuyerPurchase, createdAt: testTime, wantConfirmed: true},
-		{name: "missing id", buyListingID: "buy-1", sellListingID: "sell-1", tradePrice: price, source: MatchSourceAutomatic, createdAt: testTime, wantField: "match_request.id"},
-		{name: "missing buy listing", id: "request-1", sellListingID: "sell-1", tradePrice: price, source: MatchSourceAutomatic, createdAt: testTime, wantField: "match_request.buy_listing_id"},
-		{name: "missing sell listing", id: "request-1", buyListingID: "buy-1", tradePrice: price, source: MatchSourceAutomatic, createdAt: testTime, wantField: "match_request.sell_listing_id"},
-		{name: "same listing", id: "request-1", buyListingID: "listing-1", sellListingID: "listing-1", tradePrice: price, source: MatchSourceAutomatic, createdAt: testTime, wantField: "match_request.listing_ids"},
-		{name: "invalid price", id: "request-1", buyListingID: "buy-1", sellListingID: "sell-1", source: MatchSourceAutomatic, createdAt: testTime, wantField: "match_request.trade_price"},
-		{name: "invalid source", id: "request-1", buyListingID: "buy-1", sellListingID: "sell-1", tradePrice: price, source: MatchSource(99), createdAt: testTime, wantField: "match_request.source"},
-		{name: "zero creation time", id: "request-1", buyListingID: "buy-1", sellListingID: "sell-1", tradePrice: price, source: MatchSourceAutomatic, wantField: "match_request.created_at"},
+		{name: "automatic", input: valid},
+		{name: "seller accept", input: MatchRequestInput{ID: "request-1", BuyerID: "buyer-1", SellerID: "seller-1", ResourceRef: "resource-1", BuyListingID: "buy-1", TradePrice: price, Source: MatchSourceSellerAccept, CreatedAt: testTime}, wantConfirmed: true},
+		{name: "buyer purchase", input: MatchRequestInput{ID: "request-1", BuyerID: "buyer-1", SellerID: "seller-1", ResourceRef: "resource-1", SellListingID: "sell-1", TradePrice: price, Source: MatchSourceBuyerPurchase, CreatedAt: testTime}, wantConfirmed: true},
+		{name: "missing id", input: replaceMatchInput(valid, func(i *MatchRequestInput) { i.ID = "" }), wantField: "match_request.id"},
+		{name: "missing buyer", input: replaceMatchInput(valid, func(i *MatchRequestInput) { i.BuyerID = "" }), wantField: "match_request.buyer_id"},
+		{name: "same participant", input: replaceMatchInput(valid, func(i *MatchRequestInput) { i.SellerID = i.BuyerID }), wantField: "match_request.participant_ids"},
+		{name: "missing resource", input: replaceMatchInput(valid, func(i *MatchRequestInput) { i.ResourceRef = "" }), wantField: "match_request.resource_ref"},
+		{name: "missing buy listing", input: replaceMatchInput(valid, func(i *MatchRequestInput) { i.BuyListingID = "" }), wantField: "match_request.buy_listing_id"},
+		{name: "missing sell listing", input: replaceMatchInput(valid, func(i *MatchRequestInput) { i.SellListingID = "" }), wantField: "match_request.sell_listing_id"},
+		{name: "same listing", input: replaceMatchInput(valid, func(i *MatchRequestInput) { i.SellListingID = i.BuyListingID }), wantField: "match_request.listing_ids"},
+		{name: "seller acceptance with sell listing", input: MatchRequestInput{ID: "request-1", BuyerID: "buyer-1", SellerID: "seller-1", ResourceRef: "resource-1", BuyListingID: "buy-1", SellListingID: "sell-1", TradePrice: price, Source: MatchSourceSellerAccept, CreatedAt: testTime}, wantField: "match_request.sell_listing_id"},
+		{name: "buyer purchase with buy listing", input: MatchRequestInput{ID: "request-1", BuyerID: "buyer-1", SellerID: "seller-1", ResourceRef: "resource-1", BuyListingID: "buy-1", SellListingID: "sell-1", TradePrice: price, Source: MatchSourceBuyerPurchase, CreatedAt: testTime}, wantField: "match_request.buy_listing_id"},
+		{name: "invalid price", input: replaceMatchInput(valid, func(i *MatchRequestInput) { i.TradePrice = Amount{} }), wantField: "match_request.trade_price"},
+		{name: "invalid source", input: replaceMatchInput(valid, func(i *MatchRequestInput) { i.Source = MatchSource(99) }), wantField: "match_request.source"},
+		{name: "zero creation time", input: replaceMatchInput(valid, func(i *MatchRequestInput) { i.CreatedAt = time.Time{} }), wantField: "match_request.created_at"},
 	}
 
 	// === 执行测试用例 ===
@@ -39,7 +44,7 @@ func TestNewMatchRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			request, err := NewMatchRequest(tt.id, tt.buyListingID, tt.sellListingID, tt.tradePrice, tt.source, tt.createdAt)
+			request, err := NewMatchRequest(tt.input)
 			if tt.wantField != "" {
 				assertValidationError(t, err, tt.wantField)
 				if request != nil {
@@ -50,10 +55,13 @@ func TestNewMatchRequest(t *testing.T) {
 			if err != nil {
 				t.Fatalf("NewMatchRequest() error = %v", err)
 			}
-			if request.ID() != tt.id || request.BuyListingID() != tt.buyListingID || request.SellListingID() != tt.sellListingID {
+			if request.ID() != tt.input.ID || request.BuyListingID() != tt.input.BuyListingID || request.SellListingID() != tt.input.SellListingID {
 				t.Fatalf("NewMatchRequest() identifiers = (%q, %q, %q)", request.ID(), request.BuyListingID(), request.SellListingID())
 			}
-			if request.TradePrice() != tt.tradePrice || request.Source() != tt.source {
+			if request.BuyerID() != tt.input.BuyerID || request.SellerID() != tt.input.SellerID || request.ResourceRef() != tt.input.ResourceRef {
+				t.Fatalf("participants and resource = (%q, %q, %q)", request.BuyerID(), request.SellerID(), request.ResourceRef())
+			}
+			if request.TradePrice() != tt.input.TradePrice || request.Source() != tt.input.Source {
 				t.Fatalf("NewMatchRequest() trade values = (%v, %v)", request.TradePrice(), request.Source())
 			}
 			if request.BuyerConfirmed() != tt.wantConfirmed || request.SellerConfirmed() != tt.wantConfirmed {
@@ -61,6 +69,9 @@ func TestNewMatchRequest(t *testing.T) {
 			}
 			if request.Status() != MatchRequestStatusPending || request.OrderRef() != "" {
 				t.Fatalf("state = (%v, %q), want pending without order", request.Status(), request.OrderRef())
+			}
+			if tt.wantConfirmed && (request.BuyerConfirmedAt() != testTime || request.SellerConfirmedAt() != testTime) {
+				t.Fatalf("confirmation times = (%v, %v), want %v", request.BuyerConfirmedAt(), request.SellerConfirmedAt(), testTime)
 			}
 			if request.CreatedAt() != testTime || request.UpdatedAt() != testTime {
 				t.Fatalf("timestamps = (%v, %v), want %v", request.CreatedAt(), request.UpdatedAt(), testTime)
@@ -275,9 +286,25 @@ func TestNilMatchRequestOperations(t *testing.T) {
 
 func mustMatchRequest(t *testing.T, source MatchSource) *MatchRequest {
 	t.Helper()
-	request, err := NewMatchRequest("request-1", "buy-1", "sell-1", mustAmount(t, 2000), source, testTime)
+	input := MatchRequestInput{
+		ID: "request-1", BuyerID: "buyer-1", SellerID: "seller-1", ResourceRef: "resource-1",
+		BuyListingID: "buy-1", SellListingID: "sell-1", TradePrice: mustAmount(t, 2000),
+		Source: source, CreatedAt: testTime,
+	}
+	if source == MatchSourceSellerAccept {
+		input.SellListingID = ""
+	}
+	if source == MatchSourceBuyerPurchase {
+		input.BuyListingID = ""
+	}
+	request, err := NewMatchRequest(input)
 	if err != nil {
 		t.Fatalf("NewMatchRequest() error = %v", err)
 	}
 	return request
+}
+
+func replaceMatchInput(input MatchRequestInput, replace func(*MatchRequestInput)) MatchRequestInput {
+	replace(&input)
+	return input
 }

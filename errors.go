@@ -17,6 +17,8 @@ var (
 	ErrListingNotFound = errors.New("listing not found")
 	// ErrListingNotOwned 表示调用者不是挂单所有者。
 	ErrListingNotOwned = errors.New("listing not owned")
+	// ErrListingUnavailable 表示目标挂单方向不符或已不可成交。
+	ErrListingUnavailable = errors.New("listing unavailable")
 )
 
 // ValidationError 描述无法通过领域校验的字段。
