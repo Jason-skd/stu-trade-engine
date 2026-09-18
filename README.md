@@ -49,8 +49,7 @@ git diff --check
 
 - [组件说明](docs/project-description.md)
 - [实施方案](docs/implementation_plan.md)
-- [仓库协作规范](docs/governance/repository-workflow.md)
-- [责任与权威来源](docs/governance/ownership.md)
-- [实现规范](docs/governance/implementation.md)
-- [接口规范](docs/governance/interfaces.md)
-- [验证规范](docs/governance/verification.md)
+- [工作流治理](docs/governance/workflow.md)
+- [工程治理](docs/governance/engineering.md)
+- [验证治理](docs/governance/verification.md)
+- [仓库治理补充](docs/governance/repository.md)

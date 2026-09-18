@@ -1,117 +1,84 @@
 # Repository Governance
 
-This file is the shared maintenance contract for this repository. It contains
-repository-facing rules, not personal preferences or agent identity. Explicit
-task instructions determine the current goal and scope; this contract governs
-work inside that scope.
+This file is the shared baseline for repository maintenance. Explicit task
+instructions determine the current goal and scope. Repository-specific rules
+in `docs/governance/repository.md` supplement this baseline where they are more
+specific; they cannot silently weaken it.
 
-# Authority
+## Authority and Evidence
 
-- **G001** Consultation, investigation, diagnosis, and review do not authorize
-  implementation. Change files only after a clear start-work instruction.
-- **G002** Once implementation is authorized, continue through investigation,
+- **A001** Treat consultation, investigation, diagnosis, and review as
+  read-only. Change files or external state only after a clear implementation
+  instruction.
+- **A002** Once implementation is authorized, continue through investigation,
   changes, focused validation, repair, broader verification, and final
-  inspection.
-- **G003** Skills under `.agents/skills/` add task workflows. They do not
-  override this contract, broaden scope, or authorize writes.
-- **G004** Implementation authority is limited to this repository. It does not
-  extend to submodules, sibling or nested repositories, or other repositories
-  in the same product or workspace. Outside repositories may be inspected
-  read-only for evidence; the only permitted cross-repository mutation is
-  filing an Emergency Issue in the owning repository for handoff.
+  inspection without using routine status updates as approval gates.
+- **A003** Make low-risk choices from established contracts without repeatedly
+  asking for confirmation.
+- **A004** Ask before selecting incompatible user-visible behavior, crossing a
+  product or repository boundary, performing irreversible work, breaking a
+  public protocol, or relying on unavailable credentials or external input.
+- **A005** Treat task-specific skills as workflows, not as authority to expand
+  scope or perform additional mutations.
+- **A006** Verify conclusions against the current branch, revision, code,
+  tests, generated state, and locked dependencies. Use history, plans, and
+  memory only to guide investigation.
+- **A007** Read applicable repository instructions and routed governance, then
+  inspect the nearest implementation, callers, and tests before editing.
+- **A008** Follow existing patterns only when they conform to the current
+  authoritative contracts.
+- **A009** Change only what the task requires. Preserve unrelated and
+  uncommitted work, including overlapping edits from other contributors.
+- **A010** Do not use destructive Git operations or broad overwrites to create
+  a clean worktree.
+- **A011** Do not claim behavior, test results, generated state, or external
+  outcomes that were not observed on the applicable checkout.
 
-# Evidence and Workspace
+## Rule Identities
 
-- **G005** Verify conclusions against the current branch, code, tests, and
-  locked dependencies. History is context, not proof of current behavior.
-- **G006** Read the nearest implementation, callers, and tests before editing.
-  Follow existing patterns only when they conform to current contracts.
-- **G007** Change only what the task requires. Preserve unrelated and
-  uncommitted work.
-- **G008** Never use destructive Git operations or broad overwrites to
-  manufacture a clean worktree.
-- **G009** Never claim unobserved behavior, test results, generated state, or
-  external outcomes.
+- **A012** Give each normative rule exactly one permanent identity. Common
+  action rules use `A`; common acceptance rules use `G`; repository action and
+  acceptance supplements use `R-A` and `R-G`.
+- **A013** Add a rule with the next unused maximum number in its family. Keep
+  its ID when moving it, never reuse a deleted ID, and never continue common
+  numbering in a repository-specific family.
 
-# Numbered Governance — Important
+Action rules describe how work is performed. Acceptance rules describe facts
+that can be checked afterward from the complete pull-request diff, commits,
+tests, and recorded verification. Pull-request checklists cover `G` and `R-G`
+rules only; violations of `A` or `R-A` remain concrete review findings.
 
-- **G010** Every governance review must account for the clause IDs rather than
-  claim vaguely that the change looks compliant. Every normative clause in
-  this file and `docs/governance/*.md` has
-  one globally unique ID. IDs increase in this canonical file order:
-  `AGENTS.md`, `repository-workflow.md`, `ownership.md`, `implementation.md`,
-  `interfaces.md`, then `verification.md`. Adding, removing, or moving a clause
-  must renumber later clauses and update every repository reference in the same
-  change.
+## Governance Routing
 
-# Pull Request Gate
+- **A014** For authorization, investigation, Git, issues, pull requests, or
+  documentation workflow, read
+  [`docs/governance/workflow.md`](docs/governance/workflow.md).
+- **A015** For modeling, reuse, architecture, dependencies, interfaces, errors,
+  compatibility, generated sources, or comments, read
+  [`docs/governance/engineering.md`](docs/governance/engineering.md).
+- **A016** For tests, CI, asynchronous work, resources, or completion evidence,
+  read [`docs/governance/verification.md`](docs/governance/verification.md).
+- **A017** Read
+  [`docs/governance/repository.md`](docs/governance/repository.md) for local
+  ownership, architecture, protocols, tools, validation, and release rules.
+- **A018** Load every applicable governance file for a cross-cutting task, but
+  do not load unrelated material merely because it exists.
 
-- **G011** After a pull request exists, every completed push starts a new
-  checklist phase. Use `.agents/skills/pr-self-review`, challenge the change
-  from the strongest opposing position, and review all code authored in the
-  pull request rather than only the latest commit.
-- **G012** Record every governance clause with exactly one status: `[x]`
-  compliant with evidence, `[ ]` missed or not yet checked, `[-]` inapplicable
-  with a reason, or `[~]` checked and found incomplete. A checklist containing
-  `[ ]` or `[~]` is not complete.
-- **G013** Resolve checklist gaps with one or more focused `fix:` or `refactor:`
-  commits, push them, and repeat the checklist against the new pushed head.
+## Skill Routing
 
-# Governance Routing
-
-- **G014** For commits, branches, issues, pull requests, or documentation, read
-  [`docs/governance/repository-workflow.md`](docs/governance/repository-workflow.md).
-- **G015** For ownership, authoritative sources, or cross-repository changes,
-  read [`docs/governance/ownership.md`](docs/governance/ownership.md). When a
-  required change is owned elsewhere, use
+- **A019** Use
+  [`.agents/skills/design-change`](.agents/skills/design-change/SKILL.md) for a
+  feature or architecture decision with material design tradeoffs.
+- **A020** Use
+  [`.agents/skills/diagnose-and-fix`](.agents/skills/diagnose-and-fix/SKILL.md)
+  for a bug, regression, failing test, or incorrect runtime behavior.
+- **A021** Use
+  [`.agents/skills/resolve-review`](.agents/skills/resolve-review/SKILL.md) to
+  evaluate supplied review findings against a specific revision.
+- **A022** Use
+  [`.agents/skills/pr-self-review`](.agents/skills/pr-self-review/SKILL.md) when
+  a pull request is first opened and again immediately before the work is
+  delivered to the user as its terminal review.
+- **A023** Use
   [`.agents/skills/cross-repository-escalation`](.agents/skills/cross-repository-escalation/SKILL.md)
-  and stop before modifying the owning repository.
-- **G016** For design, implementation, refactoring, dependencies, comments,
-  schemas, or generated sources, read
-  [`docs/governance/implementation.md`](docs/governance/implementation.md).
-- **G017** For errors, HTTP, DTOs, or external protocol boundaries, read
-  [`docs/governance/interfaces.md`](docs/governance/interfaces.md).
-- **G018** For behavior changes, tests, CI, asynchronous work, or managed
-  resources, read
-  [`docs/governance/verification.md`](docs/governance/verification.md).
-- **G019** Read every applicable file for a cross-cutting task, but do not load
-  unrelated governance merely because it exists. More specific directory
-  governance may add local rules but cannot weaken this contract.
-
-# Standing Engineering Invariants
-
-- **G020** Model current needs only. Every field, operation, abstraction, and
-  public capability needs a present caller or owner.
-- **G021** Inspect existing capabilities before adding code or dependencies.
-  Reuse real common operations; do not build mode-driven universal flows.
-- **G022** Split by responsibility. New layers must validate, convert,
-  orchestrate, or isolate a dependency rather than merely forward calls.
-- **G023** Consumers define minimal capabilities. Business code does not depend
-  on process assembly, transport entry points, or concrete infrastructure.
-- **G024** Keep one authoritative source for schemas, protocols, queries, and
-  generated representations. Never hand-edit generated output.
-- **G025** Translate dependency failures at adapter boundaries, preserve
-  meaningful causes, and log once at the final handling boundary.
-- **G026** Behavior changes require behavioral tests; bug fixes require a
-  regression scenario reproducing the defect.
-- **G027** Documentation and comments describe current facts, contracts, and
-  reasons, not implementation history or speculative future work.
-
-# Completion
-
-- **G028** Keep the final diff focused and preserve unrelated workspace state.
-- **G029** Run formatting, static checks, tests, generation, and contract
-  validation in proportion to the change and repository capabilities.
-- **G030** Report actual changes, design boundaries, commands run, omitted
-  checks, and residual risk. Old or partial results are not evidence for the
-  current checkout.
-
-# Language
-
-- **G031** Final governance is English; Chinese drafts are acceptable during
-  review.
-- **G032** Comments and non-governance maintainer documentation are Chinese.
-- **G033** Console output, log templates, internal error context, and commits
-  are English.
-- **G034** Pull request and issue language is unrestricted. User-visible text
-  follows the product and upstream language contracts.
+  before a required change or handoff crosses repository ownership.
