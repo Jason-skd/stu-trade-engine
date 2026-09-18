@@ -9,6 +9,7 @@ import (
 
 // PurchaseSellListingInput 是买方直接购买 Sell Listing 所需的宿主输入。
 type PurchaseSellListingInput struct {
+	// === runtime 字段 ===
 	MatchRequestID string
 	SellListingID  string
 	BuyerID        string
@@ -17,6 +18,7 @@ type PurchaseSellListingInput struct {
 
 // AcceptBuyListingInput 是卖方直接接受 Buy Listing 所需的宿主输入。
 type AcceptBuyListingInput struct {
+	// === runtime 字段 ===
 	MatchRequestID string
 	BuyListingID   string
 	SellerID       string
@@ -26,11 +28,13 @@ type AcceptBuyListingInput struct {
 
 // DirectTradeResult 返回直接成交后的通用 Listing 与 MatchRequest 状态。
 type DirectTradeResult struct {
+	// === runtime 字段 ===
 	Listing      *Listing
 	MatchRequest *MatchRequest
 }
 
 type directTradeInput struct {
+	// === runtime 字段 ===
 	matchRequestID string
 	listingID      string
 	initiatorID    string

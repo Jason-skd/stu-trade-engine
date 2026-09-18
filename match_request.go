@@ -69,6 +69,7 @@ func (s MatchRequestStatus) valid() bool {
 // MatchRequestInput 是创建撮合请求所需的通用事实。
 // 自动撮合必须引用买卖双方 Listing；卖方接单只引用 Buy Listing；买方购买只引用 Sell Listing。
 type MatchRequestInput struct {
+	// === runtime 字段 ===
 	ID            string
 	BuyerID       string
 	SellerID      string
@@ -82,6 +83,7 @@ type MatchRequestInput struct {
 
 // MatchRequestRecord 是 MatchRequest 的逻辑持久化表示。
 type MatchRequestRecord struct {
+	// === persistent 字段 ===
 	ID                string
 	BuyerID           string
 	SellerID          string
@@ -101,6 +103,7 @@ type MatchRequestRecord struct {
 // MatchRequest 表示一次买卖撮合。零值无效，请求必须通过 NewMatchRequest 创建
 // 或通过 RestoreMatchRequest 恢复。
 type MatchRequest struct {
+	// === persistent 字段 ===
 	id                string
 	buyerID           string
 	sellerID          string

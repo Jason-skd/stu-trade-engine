@@ -4,6 +4,7 @@ import "time"
 
 // Amount 表示以人民币分为单位的正整数金额。零值无效，金额必须通过 NewAmount 创建。
 type Amount struct {
+	// === persistent 字段 ===
 	cents int64
 }
 
@@ -89,6 +90,7 @@ func (s ListingStatus) valid() bool {
 // 状态转换要求时间非零且不早于 UpdatedAt。非法时间或空接收者返回 ValidationError，
 // 非法状态转换返回 TransitionError；失败不会修改挂单。
 type Listing struct {
+	// === persistent 字段 ===
 	id          string
 	ownerID     string
 	resourceRef string
@@ -102,6 +104,7 @@ type Listing struct {
 // ListingRecord 是 Listing 的逻辑持久化表示。宿主适配器负责存取该表示，
 // 业务代码必须通过 RestoreListing 恢复并校验实体。
 type ListingRecord struct {
+	// === persistent 字段 ===
 	ID          string
 	OwnerID     string
 	ResourceRef string

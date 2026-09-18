@@ -8,6 +8,7 @@ import (
 
 // PublishListingInput 是发布挂单所需的宿主输入。
 type PublishListingInput struct {
+	// === runtime 字段 ===
 	ID          string
 	OwnerID     string
 	ResourceRef string

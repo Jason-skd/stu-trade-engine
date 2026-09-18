@@ -26,6 +26,7 @@ var (
 // ValidationError 描述无法通过领域校验的字段。
 // Field 是稳定的字段标识，Reason 是供宿主记录的英文内部上下文。
 type ValidationError struct {
+	// === runtime 字段 ===
 	Field  string
 	Reason string
 }
@@ -43,6 +44,7 @@ func (e *ValidationError) Unwrap() error {
 // TransitionError 描述被拒绝的状态转换。
 // Entity、From 和 To 提供稳定的领域状态上下文。
 type TransitionError struct {
+	// === runtime 字段 ===
 	Entity string
 	From   string
 	To     string
