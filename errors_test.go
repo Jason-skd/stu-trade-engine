@@ -44,7 +44,7 @@ func TestDomainErrorContracts(t *testing.T) {
 	}
 }
 
-func TestListingErrorIdentities(t *testing.T) {
+func TestStableErrorIdentities(t *testing.T) {
 	t.Parallel()
 
 	if ErrListingNotFound.Error() != "listing not found" {
@@ -52,5 +52,8 @@ func TestListingErrorIdentities(t *testing.T) {
 	}
 	if ErrListingNotOwned.Error() != "listing not owned" {
 		t.Fatalf("ErrListingNotOwned = %q", ErrListingNotOwned)
+	}
+	if ErrMatchRejected.Error() != "match rejected" {
+		t.Fatalf("ErrMatchRejected = %q", ErrMatchRejected)
 	}
 }

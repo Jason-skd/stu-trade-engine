@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 	"time"
 )
@@ -121,6 +122,9 @@ func TestWithdrawListingWithdrawsOpenListing(t *testing.T) {
 	if withdrawer.updated == nil || *withdrawer.updated != listing.Record() {
 		t.Fatal("WithdrawListing() did not persist the withdrawn listing")
 	}
+	if !slices.Equal(withdrawer.ids, []string{"listing-1"}) {
+		t.Fatalf("WithdrawListing() locked ids = %v", withdrawer.ids)
+	}
 }
 
 func TestWithdrawListingIsIdempotentForOwner(t *testing.T) {
@@ -175,15 +179,39 @@ func TestWithdrawListingRejectsNonOwner(t *testing.T) {
 	}
 }
 
-func TestWithdrawListingRejectsMismatchedLockedRecord(t *testing.T) {
+func TestWithdrawListingRejectsInvalidLockedRecords(t *testing.T) {
 	t.Parallel()
 
-	// === 读取不匹配记录 ===
-	withdrawer := &recordingListingWithdrawer{record: listingRecord("listing-2")}
-	_, err := WithdrawListing(context.Background(), withdrawer, withdrawInput())
-	assertValidationError(t, err, "listing.id")
-	if withdrawer.updated != nil {
-		t.Fatal("WithdrawListing() persisted a mismatched record")
+	// === 定义非法锁读取结果 ===
+	tests := []struct {
+		name      string
+		records   []ListingRecord
+		wantErr   error
+		wantField string
+	}{
+		{name: "missing record", wantErr: ErrListingNotFound},
+		{name: "unexpected record", records: []ListingRecord{listingRecord("listing-2")}, wantField: "listing.records"},
+		{name: "duplicate record", records: []ListingRecord{listingRecord("listing-1"), listingRecord("listing-1")}, wantField: "listing.records"},
+		{name: "extra record", records: []ListingRecord{listingRecord("listing-1"), listingRecord("listing-2")}, wantField: "listing.records"},
+	}
+
+	// === 验证锁读取契约 ===
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			withdrawer := &recordingListingWithdrawer{records: tt.records, useRecords: true}
+			_, err := WithdrawListing(context.Background(), withdrawer, withdrawInput())
+			if tt.wantErr != nil {
+				if !errors.Is(err, tt.wantErr) {
+					t.Fatalf("WithdrawListing() error = %v, want %v", err, tt.wantErr)
+				}
+			} else {
+				assertValidationError(t, err, tt.wantField)
+			}
+			if withdrawer.updated != nil {
+				t.Fatal("WithdrawListing() persisted an invalid locked record")
+			}
+		})
 	}
 }
 
@@ -246,14 +274,21 @@ func (r *recordingListingReader) ReadListings(_ context.Context, ids []string) (
 }
 
 type recordingListingWithdrawer struct {
-	record    ListingRecord
-	updated   *ListingRecord
-	readErr   error
-	updateErr error
+	record     ListingRecord
+	records    []ListingRecord
+	useRecords bool
+	ids        []string
+	updated    *ListingRecord
+	readErr    error
+	updateErr  error
 }
 
-func (w *recordingListingWithdrawer) ReadListingForUpdate(_ context.Context, _ string) (ListingRecord, error) {
-	return w.record, w.readErr
+func (w *recordingListingWithdrawer) ReadListingsForUpdate(_ context.Context, ids []string) ([]ListingRecord, error) {
+	w.ids = slices.Clone(ids)
+	if w.useRecords {
+		return slices.Clone(w.records), w.readErr
+	}
+	return []ListingRecord{w.record}, w.readErr
 }
 
 func (w *recordingListingWithdrawer) UpdateListing(_ context.Context, record ListingRecord) error {

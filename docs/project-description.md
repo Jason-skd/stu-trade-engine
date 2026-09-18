@@ -52,16 +52,54 @@ interface 由 engine 的消费方定义，只包含当前用例需要的能力�
 统一校验并恢复实体。`ReadListings` 使用一个批量调用取得记录并按输入 ID
 顺序返回；缺失挂单由 `ErrListingNotFound` 稳定标识。
 
-`WithdrawListing` 消费事务绑定的 `ListingWithdrawer`，先锁定并重新读取当前记录，
-再校验所有者与状态。open Listing 被改为 withdrawn；同一所有者重复撤回已 withdrawn
+`ListingLocker.ReadListingsForUpdate` 按 engine 给定的 ID 顺序取得真实锁，并返回数量、
+ID 完全一致且无重复的权威记录。普通批量读取、撤回锁读取和直接交易锁读取复用同一套
+记录集合校验与实体恢复规则。
+
+```go
+type ListingLocker interface {
+	ReadListingsForUpdate(context.Context, []string) ([]ListingRecord, error)
+}
+
+type ListingWithdrawer interface {
+	ListingLocker
+	UpdateListing(context.Context, ListingRecord) error
+}
+```
+
+`WithdrawListing` 消费事务绑定的 `ListingWithdrawer`，通过批量锁能力读取一个 ID，再
+校验所有者与状态。open Listing 被改为 withdrawn；同一所有者重复撤回已 withdrawn
 Listing 幂等成功；reserved 与 matched 状态保持不可撤回。宿主负责将该能力装配在
 与业务资料相同的物理事务中。关联 MatchRequest 的取消与对手 Listing 释放尚未加入。
 
-`PurchaseSellListing` 与 `AcceptBuyListing` 消费事务绑定的 `DirectTradeTransaction`。
-两条入口共享同一核心：锁定并恢复目标 Listing，确认方向与 open 状态，交给宿主
-`MatchPolicy` 校验业务规则，创建已确认的 MatchRequest 和幂等宿主订单，再完成请求
-及目标 Listing。买方购买按 Sell Listing 报价成交；卖方接单按 Buy Listing 报价成交并
-使用卖方提交的真实交付资源。任一步骤失败时，调用方事务负责回滚全部写入。
+直接交易入口消费 `DirectTradeUnitOfWork`。engine 在事务外校验输入，再在 `WithTx`
+回调内锁定并恢复目标 Listing、复查方向与 open 状态、校验撮合、创建已确认的
+MatchRequest 和幂等宿主订单，最后完成请求及目标 Listing。宿主负责物理事务的开启、
+adapter 绑定、提交和回滚；只有回调与提交均成功后，入口才返回非零结果。
+
+`MatchValidator.ValidateMatch` 返回 `true, nil` 表示允许，`false, nil` 表示正常业务
+不匹配，任意非空 error 表示校验执行失败且布尔值被忽略。直接交易把正常不匹配转换为
+`ErrMatchRejected`；依赖错误保留原因。买方购买的提案中 Buyer 只有参与者，Seller
+包含目标 Sell Listing 与实际资源；卖方接单的 Buyer 包含目标 Buy Listing 与需求资源，
+Seller 包含参与者与实际交付资源且没有虚假 Sell Listing。`TradeInput.ResourceRef` 和
+MatchRequest 的 `ResourceRef` 始终表示卖方实际交付资源。
+
+```go
+type DirectTradeUnitOfWork interface {
+	WithTx(context.Context, func(DirectTradeTransaction) error) error
+}
+
+type MatchValidator interface {
+	ValidateMatch(context.Context, MatchProposal) (bool, error)
+}
+
+type MatchProposal struct {
+	Buyer      MatchParticipant
+	Seller     MatchParticipant
+	TradePrice Amount
+	Source     MatchSource
+}
+```
 
 ## 所有权
 

@@ -19,6 +19,8 @@ var (
 	ErrListingNotOwned = errors.New("listing not owned")
 	// ErrListingUnavailable 表示目标挂单方向不符或已不可成交。
 	ErrListingUnavailable = errors.New("listing unavailable")
+	// ErrMatchRejected 表示宿主业务规则判定撮合不成立。
+	ErrMatchRejected = errors.New("match rejected")
 )
 
 // ValidationError 描述无法通过领域校验的字段。

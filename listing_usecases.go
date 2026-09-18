@@ -25,16 +25,8 @@ func ReadListings(ctx context.Context, reader ListingReader, ids []string) ([]*L
 	if len(ids) == 0 {
 		return []*Listing{}, nil
 	}
-
-	wanted := make(map[string]struct{}, len(ids))
-	for _, id := range ids {
-		if err := required("listing.id", id); err != nil {
-			return nil, err
-		}
-		if _, duplicate := wanted[id]; duplicate {
-			return nil, &ValidationError{Field: "listing.ids", Reason: "must not contain duplicates"}
-		}
-		wanted[id] = struct{}{}
+	if err := validateListingIDs(ids); err != nil {
+		return nil, err
 	}
 
 	// === 读取持久化记录 ===
@@ -43,7 +35,30 @@ func ReadListings(ctx context.Context, reader ListingReader, ids []string) ([]*L
 		return nil, fmt.Errorf("read listings: %w", err)
 	}
 
-	// === 恢复挂单实体 ===
+	return restoreListingRecords(ids, records)
+}
+
+func validateListingIDs(ids []string) error {
+	// === 校验请求标识 ===
+	wanted := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if err := required("listing.id", id); err != nil {
+			return err
+		}
+		if _, duplicate := wanted[id]; duplicate {
+			return &ValidationError{Field: "listing.ids", Reason: "must not contain duplicates"}
+		}
+		wanted[id] = struct{}{}
+	}
+	return nil
+}
+
+func restoreListingRecords(ids []string, records []ListingRecord) ([]*Listing, error) {
+	// === 校验并恢复返回记录 ===
+	wanted := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		wanted[id] = struct{}{}
+	}
 	byID := make(map[string]*Listing, len(records))
 	for _, record := range records {
 		if _, expected := wanted[record.ID]; !expected {
@@ -59,7 +74,7 @@ func ReadListings(ctx context.Context, reader ListingReader, ids []string) ([]*L
 		byID[record.ID] = listing
 	}
 
-	// === 重建请求顺序 ===
+	// === 按请求顺序返回实体 ===
 	listings := make([]*Listing, 0, len(ids))
 	for _, id := range ids {
 		listing, ok := byID[id]
@@ -96,20 +111,18 @@ func WithdrawListing(ctx context.Context, withdrawer ListingWithdrawer, input Wi
 	}
 
 	// === 锁定并恢复挂单 ===
-	record, err := withdrawer.ReadListingForUpdate(ctx, input.ID)
+	records, err := withdrawer.ReadListingsForUpdate(ctx, []string{input.ID})
 	if err != nil {
 		if errors.Is(err, ErrListingNotFound) {
 			return nil, fmt.Errorf("read listing %q for update: %w", input.ID, ErrListingNotFound)
 		}
 		return nil, fmt.Errorf("read listing %q for update: %w", input.ID, err)
 	}
-	listing, err := RestoreListing(record)
+	listings, err := restoreListingRecords([]string{input.ID}, records)
 	if err != nil {
-		return nil, fmt.Errorf("restore listing %q: %w", input.ID, err)
+		return nil, fmt.Errorf("restore listing %q for update: %w", input.ID, err)
 	}
-	if listing.ID() != input.ID {
-		return nil, &ValidationError{Field: "listing.id", Reason: "must match the requested id"}
-	}
+	listing := listings[0]
 
 	// === 校验撤回权限 ===
 	if listing.OwnerID() != input.OwnerID {

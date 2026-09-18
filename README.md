@@ -11,8 +11,9 @@ StuTrade Engine 是通用撮合 Go module。它管理挂单、价格兼容、撮
 - `PriceCompatible` 判断卖方报价是否不高于买方出价。
 - `PublishListing` 通过调用方定义的 `ListingCreator` 创建并保存合法的 open Listing。
 - `RestoreListing` 校验宿主持久化表示，`ReadListing` 和 `ReadListings` 按请求顺序恢复通用状态。
-- `WithdrawListing` 在宿主事务内锁定并幂等撤回属于调用者的 open Listing。
-- `PurchaseSellListing` 和 `AcceptBuyListing` 通过宿主事务直接完成目标挂单、撮合请求和订单。
+- `WithdrawListing` 通过批量锁 Protocol 在宿主事务内幂等撤回属于调用者的 open Listing。
+- `MatchValidator` 用 `(bool, error)` 区分校验通过、正常业务不匹配和依赖故障。
+- `PurchaseSellListing` 和 `AcceptBuyListing` 通过宿主 `WithTx` 工作单元原子完成锁定、复查、撮合请求、订单和挂单更新。
 - 领域错误可通过 `errors.Is` 和 `errors.As` 稳定识别。
 
 候选发现、自动撮合确认、拒绝释放和请求查询仍在实施计划中。主仓库固定本仓库的精确 commit；当前产品语义以主仓库文档为准。
