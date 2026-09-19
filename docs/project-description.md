@@ -52,6 +52,11 @@ interface 由 engine 的消费方定义，只包含当前用例需要的能力�
 统一校验并恢复实体。`ReadListings` 使用一个批量调用取得记录并按输入 ID
 顺序返回；缺失挂单由 `ErrListingNotFound` 稳定标识。
 
+撮合请求以相同边界通过 `MatchRequestReader` 和 `MatchRequestRecord` 读取。
+`ReadMatchRequests` 拒绝空白或重复的输入 ID，以及缺失、额外、重复或损坏的返回记录；
+所有记录由 `RestoreMatchRequest` 恢复，并按输入 ID 顺序返回。缺失请求由
+`ErrMatchRequestNotFound` 稳定标识，空 ID 集合不调用宿主依赖。
+
 `ListingLocker.ReadListingsForUpdate` 按 engine 给定的 ID 顺序取得真实锁，并返回数量、
 ID 完全一致且无重复的权威记录。普通批量读取、撤回锁读取和直接交易锁读取复用同一套
 记录集合校验与实体恢复规则。
