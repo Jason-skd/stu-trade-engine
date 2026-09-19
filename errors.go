@@ -21,6 +21,8 @@ var (
 	ErrListingUnavailable = errors.New("listing unavailable")
 	// ErrMatchRejected 表示宿主业务规则判定撮合不成立。
 	ErrMatchRejected = errors.New("match rejected")
+	// ErrMatchRequestNotFound 表示请求的撮合请求不存在。
+	ErrMatchRequestNotFound = errors.New("match request not found")
 )
 
 // ValidationError 描述无法通过领域校验的字段。

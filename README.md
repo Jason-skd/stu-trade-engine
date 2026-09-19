@@ -7,7 +7,7 @@ StuTrade Engine 是通用撮合 Go module。它管理挂单、价格兼容、撮
 - `Amount` 表示以人民币分计价的正整数金额。
 - `Listing` 管理买卖方向以及 open、reserved、matched、withdrawn 状态转换。
 - `MatchRequest` 管理自动撮合和直接成交的确认与终态转换。
-- `RestoreMatchRequest` 校验撮合请求的持久化表示及来源关联。
+- `RestoreMatchRequest` 校验撮合请求的持久化表示及来源关联，`ReadMatchRequest` 和 `ReadMatchRequests` 按请求顺序恢复通用状态。
 - `PriceCompatible` 判断卖方报价是否不高于买方出价。
 - `PublishListing` 通过调用方定义的 `ListingCreator` 创建并保存合法的 open Listing。
 - `RestoreListing` 校验宿主持久化表示，`ReadListing` 和 `ReadListings` 按请求顺序恢复通用状态。
@@ -16,7 +16,7 @@ StuTrade Engine 是通用撮合 Go module。它管理挂单、价格兼容、撮
 - `PurchaseSellListing` 和 `AcceptBuyListing` 通过宿主 `WithTx` 工作单元原子完成锁定、复查、撮合请求、订单和挂单更新。
 - 领域错误可通过 `errors.Is` 和 `errors.As` 稳定识别。
 
-候选发现、自动撮合确认、拒绝释放和请求查询仍在实施计划中。主仓库固定本仓库的精确 commit；当前产品语义以主仓库文档为准。
+候选发现、自动撮合确认和拒绝释放仍在实施计划中。主仓库固定本仓库的精确 commit；当前产品语义以主仓库文档为准。
 
 ## 边界
 
@@ -30,6 +30,7 @@ listing_usecases.go 读取与撤回挂单用例
 direct_trade.go    直接购买与接单用例
 listing.go         Listing 与 Amount
 match_request.go   MatchRequest
+match_request_usecases.go 读取撮合请求用例
 matching.go        价格规则
 protocol.go        当前最小能力接口
 errors.go          稳定领域错误

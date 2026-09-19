@@ -10,7 +10,6 @@
 2. 为指定 Listing 同步发现和排序候选。
 3. 在共享工作单元中锁定两张 Listing、重做规则检查并创建唯一 pending MatchRequest。
 4. 幂等确认或拒绝 pending MatchRequest，并正确释放或完成 Listing。
-5. 查询宿主需要展示的 MatchRequest，但不承载领域搜索读模型。
 
 ## 目标协作边界
 
@@ -34,8 +33,7 @@ engine 是通用 Listing、MatchRequest 的唯一领域访问入口，并按用�
 
 1. 加入候选排序和自动撮合，创建 pending MatchRequest。
 2. 加入确认、拒绝和 reserved Listing 撤回协作。
-3. 根据宿主组装和查询入口补充 MatchRequest 的最小读取能力。
-4. 通过主仓库真实 PostgreSQL 适配和跨仓库测试验证直接成交及后续协议。
+3. 通过主仓库真实 PostgreSQL 适配和跨仓库测试验证直接成交及后续协议。
 
 ## 验证目标
 

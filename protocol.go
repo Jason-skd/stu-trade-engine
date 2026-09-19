@@ -12,6 +12,11 @@ type ListingReader interface {
 	ReadListings(context.Context, []string) ([]ListingRecord, error)
 }
 
+// MatchRequestReader 是按 ID 批量读取撮合请求持久化表示所需的最小能力。
+type MatchRequestReader interface {
+	ReadMatchRequests(context.Context, []string) ([]MatchRequestRecord, error)
+}
+
 // ListingLocker 要求宿主按给定 ID 顺序取得真实挂单锁。
 // 返回记录必须与请求 ID 数量及集合完全一致，且不得包含重复记录。
 type ListingLocker interface {
