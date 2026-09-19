@@ -1,91 +1,39 @@
-# Repository Governance
+# 仓库 AI 治理
 
-This file is the shared baseline for repository maintenance. Explicit task
-instructions determine the current goal and scope. Repository-specific rules
-in `docs/governance/repository.md` supplement this baseline where they are more
-specific; they cannot silently weaken it.
+本仓库的 AI 治理由仓库内文件独立维护，不继承、跟踪或同步外部治理仓库。
 
-## Authority and Evidence
+开始工作前，按任务需要读取：
 
-- **A001** Treat consultation, investigation, diagnosis, and review as
-  read-only. Change files or external state only after a clear implementation
-  instruction.
-- **A002** Once implementation is authorized, continue through investigation,
-  changes, focused validation, repair, broader verification, and final
-  inspection without using routine status updates as approval gates.
-- **A003** Make low-risk choices from established contracts without repeatedly
-  asking for confirmation.
-- **A004** Ask before selecting incompatible user-visible behavior, crossing a
-  product or repository boundary, performing irreversible work, breaking a
-  public protocol, or relying on unavailable credentials or external input.
-- **A005** Treat task-specific skills as workflows, not as authority to expand
-  scope or perform additional mutations.
-- **A006** Verify conclusions against the current branch, revision, code,
-  tests, generated state, and locked dependencies. Use history, plans, and
-  memory only to guide investigation.
-- **A007** Read applicable repository instructions and routed governance, then
-  inspect the nearest implementation, callers, and tests before editing.
-- **A008** Follow existing patterns only when they conform to the current
-  authoritative contracts.
-- **A009** Change only what the task requires. Preserve unrelated and
-  uncommitted work, including overlapping edits from other contributors.
-- **A010** Do not use destructive Git operations or broad overwrites to create
-  a clean worktree.
-- **A011** Do not claim behavior, test results, generated state, or external
-  outcomes that were not observed on the applicable checkout.
-- **A040** The repository containing the agent's startup working directory is
-  the only default write scope. Writing another repository requires explicit
-  user authorization naming that repository and the requested action.
+- `docs/governance/engineering.md`
+- `docs/governance/repository.md`
 
-## Governance Routing
+## 权威与证据
 
-- **A014** For authorization, investigation, Git, issues, pull requests, or
-  documentation workflow, read
-  [`docs/governance/workflow.md`](docs/governance/workflow.md).
-- **A015** For modeling, reuse, architecture, dependencies, interfaces, errors,
-  compatibility, generated sources, or comments, read
-  [`docs/governance/engineering.md`](docs/governance/engineering.md).
-- **A016** For tests, CI, asynchronous work, resources, or completion evidence,
-  read [`docs/governance/verification.md`](docs/governance/verification.md).
-- **A017** Read
-  [`docs/governance/repository.md`](docs/governance/repository.md) for local
-  ownership, architecture, protocols, tools, validation, and release rules.
-- **A018** Load every applicable governance file for a cross-cutting task, but
-  do not load unrelated material merely because it exists.
-- **A044** For rule identities, governance promotion, seeds, or skill
-  boundaries, read [`docs/governance/meta.md`](docs/governance/meta.md).
-- **A045** For pull-request, main-branch, artifact, deployment, or release
-  gates, read [`docs/governance/delivery.md`](docs/governance/delivery.md).
+- 当前用户任务决定目标、范围、优先级和排除项。
+- 当前分支、revision、代码、测试、生成产物和锁定依赖决定当前实现事实。
+- 项目文档决定长期架构、领域和交付边界。
+- 官方规范、依赖源码和供应商文档决定外部协议与依赖行为。
+- 历史记录、计划和记忆只用于提供调查线索，不替代当前证据。
+- 不得声称未实际观察到的行为、测试结果或外部操作结果。
 
-## Skill Routing
+## 授权边界
 
-- **A019** Use
-  [`.agents/skills/design-change`](.agents/skills/design-change/SKILL.md) for a
-  feature or architecture decision with material design tradeoffs.
-- **A020** Use
-  [`.agents/skills/diagnose-and-fix`](.agents/skills/diagnose-and-fix/SKILL.md)
-  for a bug, regression, failing test, or incorrect runtime behavior.
-- **A021** Use
-  [`.agents/skills/resolve-review`](.agents/skills/resolve-review/SKILL.md) to
-  evaluate supplied review findings against a specific revision.
-- **A022** Use
-  [`.agents/skills/pr-self-review`](.agents/skills/pr-self-review/SKILL.md) when
-  a pull request is first opened and again immediately before the work is
-  delivered to the user as its terminal review.
-- **A023** Use
-  [`.agents/skills/cross-repository-escalation`](.agents/skills/cross-repository-escalation/SKILL.md)
-  before a required change or handoff crosses repository ownership.
-- **A046** Use
-  [`.agents/skills/repository-bootstrap`](.agents/skills/repository-bootstrap/SKILL.md)
-  to initialize governance in an explicitly authorized repository from the
-  available seeds.
-- **A047** Use
-  [`.agents/skills/governance-sync`](.agents/skills/governance-sync/SKILL.md)
-  to compare or update a repository against the managed common baseline.
-- **A048** Use
-  [`.agents/skills/github-work-management`](.agents/skills/github-work-management/SKILL.md)
-  to audit or coordinate GitHub labels, milestones, issue forms, and pull
-  request templates.
-- **A049** Use
-  [`.agents/skills/delivery-pipeline`](.agents/skills/delivery-pipeline/SKILL.md)
-  to design or adjust delivery gates and immutable artifact promotion.
+- 咨询、调查、诊断、评审和方案讨论默认只读。
+- 只有明确的实现、修复或变更指令才授权修改文件或外部状态。
+- 获得实现授权后，持续完成调查、实现、验证、修复和最终检查，不把普通状态更新作为审批点。
+- 可以根据既有契约和代码自行完成低风险工程选择。
+- 遇到不兼容的用户可见行为、不可逆操作、公开协议破坏、产品边界选择、权威来源冲突或缺失外部输入时，交由用户决定。
+- 向其他仓库写入内容必须获得明确授权。
+
+## 工作区保护
+
+- 修改前确认仓库、worktree、branch、revision 和未提交状态。
+- 一个工作分支对应一个同名 worktree，目录名中的 `/` 使用 `-`。
+- 创建或删除 worktree 时同步更新 `.code-workspace`。
+- 只修改任务需要的文件。
+- 保留用户和其他贡献者的未提交或无关改动。
+- 同一文件存在交叉修改时，先读取完整 diff。
+- 不使用破坏性 Git 操作或批量覆盖制造干净工作区。
+- 提交时显式暂存任务所属路径并检查 staged diff。
+- AI 不合并 pull request，也不启用 auto-merge。
+- 除非用户明确要求清理，否则保留任务分支、worktree、workspace 条目和远程分支。

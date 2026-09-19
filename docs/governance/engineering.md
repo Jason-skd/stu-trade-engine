@@ -1,106 +1,94 @@
-# Engineering Governance
+# 工程约束
 
-This file governs modeling, reuse, responsibility boundaries, authoritative
-sources, dependencies, errors, compatibility, generated artifacts, and
-comments.
+本文定义 AI 在本仓库执行工程任务时必须遵守的长期约束，不规定代码排版、命名、注释形式或其他代码风格。
 
-## Modeling
+## 范围
 
-- **A036** Before changing a `struct` declaration or protocol contract, present
-  the proposed `struct` or protocol definition as a code snippet and wait for
-  the user's approval.
-- **G021** The implementation models complete current requirements without
-  fields, operations, abstractions, directories, or public capabilities for
-  hypothetical future needs.
-- **G022** Every public capability and persisted field has a present caller,
-  reader, writer, or explicitly named owner.
-- **G023** Keys, constraints, and operations follow real queries and invariants
-  rather than a generic CRUD shape.
-- **G024** Data integrity and structural correctness are enforced by the most
-  authoritative schema, type, or contract layer that can express each
-  invariant—for example, database keys, constraints, foreign keys, checks, and
-  database-owned triggers, or non-database types, schemas, and protocol
-  definitions. Business code may provide earlier error reporting, but does not
-  replace authoritative enforcement or rely on callers repeating template
-  logic.
-- **G065** A data-model `struct` groups each field under the exact applicable
-  header below, and each header appears if and only if at least one such field
-  exists: `// === persistent 字段 ===` for directly persisted fields,
-  `// === schema 字段 ===` for schema-derived fields such as JOIN results, and
-  `// === runtime 字段 ===` for in-memory-only fields.
+- 只实现当前任务要求的行为。
+- 不添加假设性字段、能力、抽象、目录或扩展点。
+- 不进行与任务无关的重构或清理。
+- 一个需求涉及多个层次时，完整更新受影响的代码、数据、协议、测试、生成产物和文档。
+- 不为了缩小 diff 保留重复入口、双轨实现或无价值的临时结构。
 
-## Reuse and Responsibilities
+## 建模与完整性
 
-- **G025** Existing capabilities and locked dependencies are reused when they
-  already implement the required contract.
-- **G026** Shared code represents a real common operation with one contract,
-  not merely similar syntax or a universal flow controlled by modes.
-- **G027** Code is split by responsibility rather than length or directory
-  symmetry, while closely cooperating behavior remains nearby.
-- **G028** A new layer validates, converts, orchestrates, or isolates a
-  dependency; it does not only forward calls.
-- **G029** Abstractions serve current callers and do not form speculative
-  frameworks or empty extension points.
+- 每个公共能力和持久化字段都必须存在当前调用者、读写者或明确所有者。
+- 数据结构、键、约束和操作必须来自真实查询与领域不变量。
+- 数据完整性由能够表达该约束的最权威层负责，例如数据库、类型系统、schema 或协议定义。
+- 业务代码可以提前返回错误，但不能替代权威层的完整性约束。
+- 数据、事务、锁、认证和副作用顺序必须明确失败行为。
 
-## Capability and Dependency Boundaries
+## 职责边界
 
-- **G030** Consumers define the smallest capability interfaces they need;
-  callers own dependency injection, process assembly, and lifecycle wiring.
-- **G031** Business rules remain independent of transport entry points, process
-  assembly, and concrete infrastructure where the repository architecture
-  supports that separation.
-- **G032** Protocol entry points own protocol concerns, while adapters contain
-  dependency-specific types and perform real translation or isolation.
-- **G033** Functions are used when no state or dependency is retained; code is
-  not forced into a uniform service pattern.
-- **G034** New dependencies provide a present capability that cannot be met
-  adequately by the standard library or an established repository dependency.
+- 业务规则与传输入口、进程装配和具体基础设施保持分离。
+- 消费者定义其需要的最小能力接口。
+- 调用方负责依赖注入、进程装配和生命周期管理。
+- 协议入口负责协议语义。
+- Adapter 负责依赖类型、转换、错误映射和隔离。
+- 新的一层必须承担真实职责，不能只转发调用。
+- 新抽象必须消除真实复杂度、建立所有权边界或减少有意义的重复。
+- 不建立全局可变单例、隐藏注册表或难以隔离测试的静态状态。
 
-## Sources, Generation, and Compatibility
+## 复用与依赖
 
-- **G035** Each schema, protocol, query, and generated representation has one
-  identified authoritative source.
-- **G036** Generated artifacts are produced by the established workflow and
-  are not edited or synchronized manually.
-- **G037** Dependency behavior follows the contract and source of the locked
-  version actually in use.
-- **G038** Upstream interfaces are not changed for local naming preferences,
-  and dependency internals are not copied to bypass a missing capability.
-- **G039** Internal changes update declarations, callers, tests, examples,
-  documentation, and generated bindings together.
-- **G040** A compatibility layer exists only for a real external boundary with
-  a named consumer and a removal condition.
+- 修改前读取相邻实现、调用方和测试。
+- 优先复用已经满足契约的标准库、仓库能力和锁定依赖。
+- 新依赖必须提供标准库或既有依赖无法合理满足的当前能力。
+- 依赖行为以当前锁定版本的契约和源码为准。
+- 不修改上游接口来满足本地偏好。
+- 不复制依赖内部实现来绕过缺失能力。
 
-## Errors and External Boundaries
+## 权威来源与生成产物
 
-- **G041** The implementation reuses the repository's established error
-  identities, constructors, chains, and response mechanism rather than adding
-  a parallel general error system.
-- **G042** Distinct failure conditions retain distinct identities, and
-  dependency failures are translated into domain meaning at their adapter
-  boundaries.
-- **G043** Meaningful causes are preserved and operation context is added only
-  when useful; errors are logged once at the final handling boundary.
-- **G044** User-facing failures exclude internal causes while mapping relevant
-  validation, authentication, authorization, absence, conflict, and dependency
-  conditions explicitly.
-- **G045** Corrupt input and business or side-effect failures are not reported
-  as success. Panic or termination is reserved for unrecoverable programming
-  or static assembly errors.
-- **G046** Transport methods, status, idempotence, requiredness, nullability,
-  and serialization match the owned protocol semantics.
-- **G047** Transport DTOs and mappings remain outside domain entities, and
-  runtime output and generated protocol documentation share structural sources.
+- 每个 schema、协议、查询和生成表示必须有唯一、明确的权威来源。
+- 生成产物必须通过正式生成流程更新，不得手工伪造。
+- 内部接口变化必须同步更新声明、实现、调用方、测试、文档和生成绑定。
+- 运行时输出与生成的协议文档必须来自一致的结构来源。
 
-## Comments
+## 兼容性
 
-- **G048** Public contracts follow the language's documentation conventions;
-  non-public contracts are documented when names and code are insufficient.
-- **G049** Explanatory comments record reasons, constraints, or non-obvious
-  tradeoffs rather than narrating clear code.
-- **G064** Except for `struct` field blocks governed by G065, code is organized
-  into logical blocks, each introduced by a language-appropriate comment whose
-  text has the form `=== verb-objective phrase ===` and states what the block
-  does.
-- **G050** Comments describe current behavior only, not issue history, pull
-  requests, governance clauses, migrations, or speculative future work.
+内部代码默认不增加仅用于改名、转发、re-export 或保留旧入口的兼容层。
+
+兼容层只用于真实外部边界，例如：
+
+- 已发布公共 API 的弃用周期。
+- 线上协议的跨版本互操作。
+- 数据迁移或滚动部署。
+- 承担转换、权限、审计、指标或依赖隔离的 adapter。
+
+保留兼容层时，必须明确兼容对象、当前使用者、测试覆盖和删除条件。
+
+## 错误与协议
+
+- 复用仓库已有错误身份、构造器、错误链和响应机制。
+- 不同失败条件保留不同身份。
+- 依赖错误在 adapter 边界转换为领域含义。
+- 保留有意义的底层原因。
+- 错误只在最终处理边界记录一次。
+- 用户可见错误不得暴露内部原因。
+- 验证、认证、授权、缺失、冲突和依赖故障必须得到明确映射。
+- 损坏输入、业务失败或副作用失败不得报告为成功。
+- Panic 或进程终止仅用于不可恢复的编程错误或静态装配错误。
+- HTTP 方法、状态码、幂等性、必填性、可空性和序列化必须符合协议语义。
+- 传输 DTO 与领域实体保持分离。
+
+## 测试
+
+- 新增或改变的行为必须在最近的责任层获得行为覆盖。
+- 修复缺陷时必须增加能够复现原始失败模式的回归场景。
+- 跨层测试验证协议、装配和关键协作，不重复所有下层场景。
+- 当测试对象是真实系统语义时，使用真实系统及正式初始化过程。
+- 替代实现只能用于其能够忠实表达的语义。
+- 测试资源必须具有明确且有界的清理过程。
+- 异步测试使用条件等待和明确超时，不使用固定 sleep 推测完成时间。
+- 测试 helper 不得复制生产决策逻辑。
+
+## 验证与完成
+
+- 先运行最接近改动的检查，修复失败后再按风险扩大验证范围。
+- 编译通过或单个 focused test 通过不代表任务完成。
+- 完成前检查完整 diff、静态分析、测试、生成同步、契约和文档。
+- 完整验证不得静默跳过所需外部依赖。
+- 无法运行的检查必须明确报告，并说明剩余风险。
+- 最终报告只列出实际运行的命令及其当前 checkout 结果。
+- 最终 diff 必须聚焦且完整，不包含无关修改、临时调试内容或本地产物。

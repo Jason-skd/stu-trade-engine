@@ -1,25 +1,29 @@
 ---
 name: diagnose-and-fix
-description: Diagnose and, when authorized, repair a bug, regression, failing test, or incorrect runtime behavior. Do not use for feature design or review-comment validation.
+description: 诊断并在获得授权时修复 bug、回归、失败测试或错误运行行为。不用于功能设计或 review finding 验证。
 ---
 
-# Diagnose and Fix
+# 诊断与修复
 
-Apply the routed governance in `AGENTS.md`. Diagnosis does not authorize file
-changes.
+遵循 `AGENTS.md` 和适用工程约束。诊断本身不授权修改文件。
 
-Establish separately the current observable behavior, expected behavior and
-its authoritative source, and the smallest reliable reproduction on the
-current checkout. Trace from the observable entry point through the owning
-rule, adapters, and side effects. Distinguish the root cause from symptoms and
-identify the smallest complete repair.
+分别确认：
 
-If the request is diagnosis-only, stop after reporting evidence, cause, impact,
-and a recommended solution. When repair is authorized, add or extend a
-regression scenario at the closest responsible layer, implement the complete
-fix across affected contracts and derived artifacts, validate the reproduction,
-then expand checks according to risk.
+- 当前可观察行为。
+- 预期行为及其权威来源。
+- 当前 checkout 上最小且可靠的复现方式。
 
-Report the current situation and cause, expected situation, solution,
-regression coverage, commands actually run, and residual risk. Never claim a
-before-or-after test result that was not observed.
+从可观察入口追踪到负责该行为的规则、adapter 和副作用。区分根因与症状，并确定最小完整修复。
+
+如果任务只要求诊断，在报告证据、原因、影响和推荐方案后停止。
+
+获得修复授权后：
+
+1. 在最近的责任层增加或扩展回归场景。
+2. 完成受影响契约和派生产物的修复。
+3. 验证原始复现。
+4. 根据风险扩大检查范围。
+
+最终报告当前情况与原因、预期情况、解决方案、回归覆盖、实际运行的命令和剩余风险。
+
+不得声称未观察到的修复前或修复后测试结果。

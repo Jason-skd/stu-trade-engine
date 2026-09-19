@@ -1,23 +1,33 @@
 ---
 name: resolve-review
-description: Evaluate and, when authorized, resolve supplied code-review findings against a specific revision. Do not use for independent general review, ordinary bug reports, or feature design.
+description: 针对具体 revision 验证并在获得授权时解决用户提供的 code review finding。不用于独立全面 review、普通 bug 报告或功能设计。
 ---
 
-# Resolve Review
+# 处理 Review Finding
 
-Treat each comment as a hypothesis. Apply the routed governance in `AGENTS.md`;
-evaluation alone does not authorize fixes.
+将每条 comment 视为需要验证的假设。遵循 `AGENTS.md` 和适用工程约束；评估本身不授权修复。
 
-Anchor the comment to its revision, branch, paths, and symbols, then inspect the
-implementation, callers, contracts, and tests. Classify each finding as a
-current defect, already resolved, false positive, or needing a product or
-ownership decision. Record concrete evidence rather than changing code to
-satisfy wording.
+将 comment 锚定到具体 revision、branch、路径和符号，然后检查：
 
-When repair is authorized, group related current defects by root cause, add
-behavioral or regression coverage where behavior changes, and run the closest
-checks before expanding verification. Keep unrelated cleanup out of the diff.
+- 当前实现。
+- 调用方。
+- 契约。
+- 测试。
 
-Lead the report with unresolved findings ordered by severity and grounded in
-file references. Then report fixes, rejected or obsolete comments with reasons,
-and verification evidence.
+将每条 finding 分类为：
+
+- 当前缺陷。
+- 已经解决。
+- 误报。
+- 需要产品或所有权决策。
+
+使用具体证据进行判断，不为了满足 comment 的文字表述而修改代码。
+
+获得修复授权后：
+
+1. 按根因合并相关的当前缺陷。
+2. 行为变化时增加行为或回归覆盖。
+3. 先运行最近的检查，再扩大验证范围。
+4. 保持 diff 聚焦，不进行无关清理。
+
+报告首先列出按严重程度排序的未解决 finding，并提供文件证据；然后说明已修复项、拒绝或已过时的 comment 及原因，以及验证证据。

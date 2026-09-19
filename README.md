@@ -43,7 +43,6 @@ errors.go          稳定领域错误
 
 ```bash
 test -z "$(gofmt -l .)"
-find .agents/skills -type f -name '*.sh' -print0 | xargs -0 bash -n
 go vet ./...
 go test ./...
 go test -race ./...
@@ -55,9 +54,5 @@ git diff --check
 
 - [组件说明](docs/project-description.md)
 - [实施方案](docs/implementation_plan.md)
-- [工作流治理](docs/governance/workflow.md)
-- [工程治理](docs/governance/engineering.md)
-- [验证治理](docs/governance/verification.md)
-- [治理元规则](docs/governance/meta.md)
-- [交付治理](docs/governance/delivery.md)
-- [仓库治理补充](docs/governance/repository.md)
+- [工程约束](docs/governance/engineering.md)
+- [工程边界](docs/governance/repository.md)
